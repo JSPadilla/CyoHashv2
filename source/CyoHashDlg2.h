@@ -1,4 +1,4 @@
-//////////////////////////////////////////////////////////////////////
+﻿//////////////////////////////////////////////////////////////////////
 // CyoHashDlg2.h - part of the CyoHash application
 //
 // Copyright (c) Graham Bull. All rights reserved.
@@ -61,6 +61,7 @@ BEGIN_MSG_MAP( CyoHashDlg2 )
     NOTIFY_HANDLER( IDC_LIST, NM_DBLCLK, OnDblClkList )
     NOTIFY_HANDLER( IDC_LIST, NM_RCLICK, OnRClickList )
     NOTIFY_HANDLER( IDC_LIST, LVN_KEYDOWN, OnKeyDownList )
+    NOTIFY_HANDLER( IDC_LIST, NM_CUSTOMDRAW, OnCustomDrawList )
     // Menu Handlers
     COMMAND_HANDLER( IDC_MENU_PAUSE, BN_CLICKED, OnMenuPause )
     COMMAND_HANDLER( IDC_MENU_RESUME, BN_CLICKED, OnMenuResume )
@@ -71,6 +72,9 @@ BEGIN_MSG_MAP( CyoHashDlg2 )
     COMMAND_HANDLER( IDC_MENU_CLEARALL, BN_CLICKED, OnMenuClearAll )
     COMMAND_HANDLER( IDC_MENU_HASHFILE, BN_CLICKED, OnMenuHashFile )
     COMMAND_HANDLER( IDC_MENU_EXPORTHASHES, BN_CLICKED, OnMenuExportHashes )
+    COMMAND_HANDLER( IDC_MENU_EXPORT_FORENSIC_PDF, BN_CLICKED, OnMenuExportForensicPdf )
+    COMMAND_HANDLER( IDC_MENU_SELECT_MATCHING_HASHES, BN_CLICKED, OnMenuSelectMatchingHashes )
+    COMMAND_HANDLER( IDC_MENU_RESET_COLUMNS, BN_CLICKED, OnMenuResetColumns )
     COMMAND_HANDLER( IDC_MENU_ALWAYS_ON_TOP, BN_CLICKED, OnMenuAlwaysOnTop )
     COMMAND_HANDLER( IDC_MENU_ABOUT, BN_CLICKED, OnMenuAbout )
     COMMAND_HANDLER( IDC_MENU_MD5, BN_CLICKED, OnMenuMD5 )
@@ -103,6 +107,7 @@ END_MSG_MAP()
     LRESULT OnDblClkList( int idCtrl, LPNMHDR pnmh, BOOL& bHandled );
     LRESULT OnRClickList( int idCtrl, LPNMHDR pnmh, BOOL& bHandled );
     LRESULT OnKeyDownList( int idCtrl, LPNMHDR pnmh, BOOL& bHandled );
+    LRESULT OnCustomDrawList( int idCtrl, LPNMHDR pnmh, BOOL& bHandled );
     // Menu Handlers
     LRESULT OnMenuPause( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled );
     LRESULT OnMenuResume( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled );
@@ -113,6 +118,9 @@ END_MSG_MAP()
     LRESULT OnMenuClearAll( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled );
     LRESULT OnMenuHashFile( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled );
     LRESULT OnMenuExportHashes( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled );
+    LRESULT OnMenuExportForensicPdf( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled );
+    LRESULT OnMenuSelectMatchingHashes( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled );
+    LRESULT OnMenuResetColumns( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled );
     LRESULT OnMenuAlwaysOnTop( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled );
     LRESULT OnMenuAbout( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled );
     LRESULT OnMenuMD5( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled );
@@ -146,6 +154,9 @@ private:
         CStringW algorithm;
         CStringW algorithmLong;
         CStringW hash;
+        ULONGLONG fileSize;
+        FILETIME hashStartedUtc;
+        FILETIME hashedUtc;
         bool splitHash;
         bool paused;
         bool completed;
@@ -180,6 +191,7 @@ private:
     HANDLE m_exitEvent;
     HICON m_hIcon;
     HMENU m_hMenu;
+    HMENU m_hMainMenu;
     CStringW m_pathname;
     CStringW m_algorithm;
     int m_nextKey;
@@ -189,6 +201,8 @@ private:
     CAtlList<CStringW> m_droppedFiles;
     SortBy m_sortBy;
     bool m_alwaysOnTop;
+    int m_columnWidths[3];
+    IntVector m_matchingHighlightKeys;
 
     // Implementation
     void ReadLastSettings();
@@ -197,6 +211,10 @@ private:
     void SaveCurrentSettings();
     void WriteIntToRegistry( HKEY hKey, LPCWSTR name, int value );
     void ResizeList();
+    void ResetColumnWidths();
+    CStringW GetDirectoryPath( const CStringW& pathname ) const;
+    bool IsCrossPathDuplicate( int key );
+    bool IsMatchingHighlightKey( int key ) const;
     int GetItemKey( int item );
     int FindItem( int key );
     void ClearSelectedItems();
@@ -227,7 +245,8 @@ private:
     void SafeSetThreadHandle( int key, HANDLE thread );
     HashData SafeGetHashData( int key );
     void SafeSetPaused( int key, bool paused );
-    void SafeSetCompleted( int key, IHasher* hasher );
+    void SafeSetStarted( int key );
+    void SafeSetCompleted( int key, IHasher* hasher, ULONGLONG fileSize );
     void SafeSetCancelled( int key );
     void SafeClearAll();
     void SafeJoinAll();

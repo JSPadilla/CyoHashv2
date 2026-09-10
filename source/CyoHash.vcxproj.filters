@@ -36,6 +36,12 @@
     <ClCompile Include="CyoHashDlg2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ForensicReportDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PdfReport.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Hasher.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -60,6 +66,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CyoHashDlg2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ForensicReportDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PdfReport.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Hasher.h">

@@ -1,4 +1,4 @@
-//////////////////////////////////////////////////////////////////////
+﻿//////////////////////////////////////////////////////////////////////
 // CyoHashDlg2.cpp - part of the CyoHash application
 //
 // Copyright (c) Graham Bull. All rights reserved.
@@ -32,7 +32,10 @@
 #include "BrowseDlg.h"
 #include "Hasher.h"
 #include "NamedPipeServer.h"
+#include "ForensicReportDlg.h"
+#include "PdfReport.h"
 #include "Utils.h"
+#include <algorithm>
 
 //////////////////////////////////////////////////////////////////////
 // Helpers/Constants
@@ -81,6 +84,7 @@ CyoHashDlg2::CyoHashDlg2( LPCWSTR pipeName, HANDLE dialogReadyEvent, LPCWSTR pat
     m_exitEvent( NULL ),
     m_hIcon( NULL ),
     m_hMenu( NULL ),
+    m_hMainMenu( NULL ),
     m_pathname( pathname ),
     m_algorithm( algorithm ),
     m_nextKey( 0 ),
@@ -88,6 +92,10 @@ CyoHashDlg2::CyoHashDlg2( LPCWSTR pipeName, HANDLE dialogReadyEvent, LPCWSTR pat
     m_alwaysOnTop( true )
 {
     m_sync.Init();
+
+    m_columnWidths[0] = -1;
+    m_columnWidths[1] = -1;
+    m_columnWidths[2] = -1;
 
     m_exitEvent = ::CreateEventW( NULL, TRUE, FALSE, NULL );
     ATLASSERT( m_exitEvent != NULL );
@@ -105,10 +113,20 @@ CyoHashDlg2::CyoHashDlg2( LPCWSTR pipeName, HANDLE dialogReadyEvent, LPCWSTR pat
 
     m_hMenu = ::LoadMenuW( _AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE( IDR_MENU1 ));
     ATLASSERT( m_hMenu != NULL );
+
+    m_hMainMenu = ::LoadMenuW( _AtlBaseModule.GetResourceInstance(), MAKEINTRESOURCE( IDR_MAINMENU ));
+    ATLASSERT( m_hMainMenu != NULL );
 }
 
 CyoHashDlg2::~CyoHashDlg2()
 {
+    if (m_hMainMenu != NULL)
+    {
+        ::SetMenu( m_hWnd, NULL );
+        ::DestroyMenu( m_hMainMenu );
+        m_hMainMenu = NULL;
+    }
+
     if (m_hMenu != NULL)
     {
         ::DestroyMenu( m_hMenu );
@@ -176,6 +194,19 @@ LRESULT CyoHashDlg2::OnInitDialog( UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL
     CAxDialogImpl< CyoHashDlg2 >::OnInitDialog( uMsg, wParam, lParam, bHandled );
 
     ReadLastSettings();
+
+    SetWindowTextW( L"CyoHash v2.6.0" );
+    if (m_hMainMenu != NULL)
+        ::SetMenu( m_hWnd, m_hMainMenu );
+
+    if (m_hMainMenu != NULL)
+    {
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_ALWAYS_ON_TOP, MF_BYCOMMAND | (m_alwaysOnTop ? MF_CHECKED : MF_UNCHECKED) );
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_UNSORTED, MF_BYCOMMAND | (m_sortBy == SortBy::Unsorted ? MF_CHECKED : MF_UNCHECKED) );
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_SORTBY_FILE, MF_BYCOMMAND | (m_sortBy == SortBy::SortByFile ? MF_CHECKED : MF_UNCHECKED) );
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_SORTBY_ALGORITHM, MF_BYCOMMAND | (m_sortBy == SortBy::SortByAlgorithm ? MF_CHECKED : MF_UNCHECKED) );
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_SORTBY_HASH, MF_BYCOMMAND | (m_sortBy == SortBy::SortByHash ? MF_CHECKED : MF_UNCHECKED) );
+    }
 
     InitList();
 
@@ -378,6 +409,7 @@ LRESULT CyoHashDlg2::OnHashingCompleted( UINT uMsg, WPARAM wParam, LPARAM lParam
     ListView_SetItemText( m_listWnd, item, 2, (LPWSTR)(LPCWSTR)hashData.hash );
 
     SortList();
+    ::InvalidateRect( m_listWnd, NULL, FALSE );
 
     bHandled = TRUE;
     return 0;
@@ -410,8 +442,17 @@ LRESULT CyoHashDlg2::OnDblClkList( int idCtrl, LPNMHDR pnmh, BOOL& bHandled )
 
         if (hashData.completed)
         {
-            CyoHashDlg dlg( hashData.pathname, hashData.algorithmLong, hashData.hash, hashData.splitHash );
-            dlg.DoModal();
+            CyoHashDlg* dlg = new CyoHashDlg( hashData.pathname, hashData.algorithmLong, hashData.hash, hashData.splitHash, hashData.fileSize, hashData.hashStartedUtc, hashData.hashedUtc );
+            if (dlg->Create( m_hWnd ) == NULL)
+            {
+                delete dlg;
+                ::MessageBoxW( m_hWnd, L"Unable to open the hash detail window.", L"CyoHash", MB_OK | MB_ICONERROR );
+            }
+            else
+            {
+                dlg->ShowWindow( SW_SHOWNORMAL );
+                ::SetForegroundWindow( dlg->m_hWnd );
+            }
         }
     }
 
@@ -478,6 +519,44 @@ LRESULT CyoHashDlg2::OnKeyDownList( int idCtrl, LPNMHDR pnmh, BOOL& bHandled )
     return 0;
 }
 
+LRESULT CyoHashDlg2::OnCustomDrawList( int idCtrl, LPNMHDR pnmh, BOOL& bHandled )
+{
+    NMLVCUSTOMDRAW* customDraw = reinterpret_cast<NMLVCUSTOMDRAW*>( pnmh );
+    if (customDraw == NULL)
+    {
+        bHandled = FALSE;
+        return CDRF_DODEFAULT;
+    }
+
+    if (customDraw->nmcd.dwDrawStage == CDDS_PREPAINT)
+    {
+        bHandled = TRUE;
+        return CDRF_NOTIFYITEMDRAW;
+    }
+
+    if (customDraw->nmcd.dwDrawStage == CDDS_ITEMPREPAINT)
+    {
+        int item = static_cast<int>( customDraw->nmcd.dwItemSpec );
+        if (item >= 0)
+        {
+            int key = GetItemKey( item );
+            const bool selected = ((customDraw->nmcd.uItemState & CDIS_SELECTED) != 0);
+            if (selected && IsMatchingHighlightKey( key ))
+            {
+                // Keep matching-hash selection visually distinct from normal Windows selection.
+                customDraw->nmcd.uItemState &= ~CDIS_SELECTED;
+                customDraw->clrTextBk = RGB( 198, 239, 206 );
+                customDraw->clrText = RGB( 0, 97, 0 );
+            }
+        }
+        bHandled = TRUE;
+        return CDRF_DODEFAULT;
+    }
+
+    bHandled = FALSE;
+    return CDRF_DODEFAULT;
+}
+
 //////////////////////////////////////////////////////////////////////
 // Menu Handlers
 
@@ -531,7 +610,11 @@ LRESULT CyoHashDlg2::OnMenuCancel( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOO
 LRESULT CyoHashDlg2::OnMenuCopyHash( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled )
 {
     IntVector items = GetSelectedItems();
-    ATLASSERT( items.size() == 1 );
+    if (items.size() != 1)
+    {
+        bHandled = TRUE;
+        return 0;
+    }
 
     int key = GetItemKey( items[ 0 ] );
     HashData hashData = SafeGetHashData( key );
@@ -635,10 +718,231 @@ LRESULT CyoHashDlg2::OnMenuExportHashes( WORD wNotifyCode, WORD wID, HWND hWndCt
     return 0;
 }
 
+LRESULT CyoHashDlg2::OnMenuExportForensicPdf( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled )
+{
+    IntVector items = GetSelectedItems();
+    std::vector<ForensicHashReportData> reportItems;
+
+    {
+        CComCritSecLock<CComCriticalSection> lock( m_sync );
+        for (IntVector::const_iterator i = items.begin(); i != items.end(); ++i)
+        {
+            int key = GetItemKey( *i );
+            HashData hashData = SafeGetHashData( key );
+            if (!hashData.completed)
+                continue;
+
+            ForensicHashReportData data;
+            data.pathname = hashData.pathname;
+            data.algorithm = hashData.algorithmLong;
+            data.hash = hashData.hash;
+            data.fileSize = hashData.fileSize;
+            data.hashStartedUtc = hashData.hashStartedUtc;
+            data.hashedUtc = hashData.hashedUtc;
+            data.suppressUserProfile = false;
+            reportItems.push_back( data );
+        }
+    }
+
+    if (reportItems.empty())
+    {
+        ::MessageBoxW( m_hWnd, L"Select one or more completed hash results before exporting a forensic PDF.",
+            L"CyoHash - Forensic Report", MB_OK | MB_ICONINFORMATION );
+        bHandled = TRUE;
+        return 0;
+    }
+
+    ForensicReportDlg details;
+    if (details.DoModal( m_hWnd ) != IDOK)
+    {
+        bHandled = TRUE;
+        return 0;
+    }
+
+    for (size_t i = 0; i < reportItems.size(); ++i)
+    {
+        reportItems[i].caseName = details.caseName;
+        reportItems[i].examiner = details.examiner;
+        reportItems[i].evidenceItem = details.evidenceItem;
+        reportItems[i].suppressUserProfile = details.suppressUserProfile;
+    }
+
+    // Sort only the PDF export copy. The order displayed in the main results
+    // window remains unchanged. Up to five sort fields can participate,
+    // with each level independently ascending or descending.
+    std::stable_sort( reportItems.begin(), reportItems.end(),
+        [this, &details]( const ForensicHashReportData& left, const ForensicHashReportData& right ) -> bool
+        {
+            for (int level = 0; level < 5; ++level)
+            {
+                const ForensicReportDlg::PdfSortLevel& sort = details.sortLevels[level];
+                if (sort.field == ForensicReportDlg::PdfSortField::None)
+                    continue;
+
+                int comparison = 0;
+                switch (sort.field)
+                {
+                case ForensicReportDlg::PdfSortField::FileName:
+                    comparison = CStringW( ::PathFindFileNameW( (LPCWSTR)left.pathname ) ).CompareNoCase(
+                        CStringW( ::PathFindFileNameW( (LPCWSTR)right.pathname ) ) );
+                    break;
+
+                case ForensicReportDlg::PdfSortField::FileSize:
+                    comparison = (left.fileSize < right.fileSize) ? -1 :
+                        ((left.fileSize > right.fileSize) ? 1 : 0);
+                    break;
+
+                case ForensicReportDlg::PdfSortField::Algorithm:
+                    comparison = left.algorithm.CompareNoCase( right.algorithm );
+                    break;
+
+                case ForensicReportDlg::PdfSortField::PathName:
+                    comparison = this->GetDirectoryPath( left.pathname ).CompareNoCase( this->GetDirectoryPath( right.pathname ) );
+                    break;
+
+                case ForensicReportDlg::PdfSortField::HashValue:
+                    comparison = left.hash.CompareNoCase( right.hash );
+                    break;
+
+                default:
+                    break;
+                }
+
+                if (comparison != 0)
+                    return sort.ascending ? (comparison < 0) : (comparison > 0);
+            }
+
+            // stable_sort preserves the pre-export order for complete ties.
+            return false;
+        } );
+
+    CComPtr<IFileDialog> fileDialog;
+    if (FAILED(fileDialog.CoCreateInstance(CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER)))
+    {
+        ::MessageBoxW( m_hWnd, L"Unable to open the Save PDF dialog.", L"CyoHash - Forensic Report", MB_OK | MB_ICONERROR );
+        bHandled = TRUE;
+        return 0;
+    }
+
+    COMDLG_FILTERSPEC filters[] = { { L"PDF files", L"*.pdf" }, { L"All files", L"*.*" } };
+    fileDialog->SetFileTypes( ARRAYSIZE(filters), filters );
+    fileDialog->SetFileTypeIndex( 1 );
+    fileDialog->SetDefaultExtension( L"pdf" );
+
+    CStringW suggested;
+    if (reportItems.size() == 1)
+    {
+        CStringW filename = ::PathFindFileNameW( (LPCWSTR)reportItems[0].pathname );
+        int dot = filename.ReverseFind( L'.' );
+        if (dot > 0) filename = filename.Left( dot );
+        suggested = filename + L"_Hash_Report.pdf";
+    }
+    else
+    {
+        suggested = L"CyoHash_Forensic_Hash_Report.pdf";
+    }
+    fileDialog->SetFileName( suggested );
+
+    if (SUCCEEDED(fileDialog->Show( m_hWnd )))
+    {
+        CComPtr<IShellItem> item;
+        if (SUCCEEDED(fileDialog->GetResult( &item )))
+        {
+            PWSTR path = NULL;
+            if (SUCCEEDED(item->GetDisplayName( SIGDN_FILESYSPATH, &path )))
+            {
+                CStringW error;
+                if (pdfreport::SaveForensicHashReportBatch( path, reportItems, error ))
+                {
+                    CStringW message;
+                    message.Format( L"Forensic hash report exported successfully.\n\n%u hash result(s) included.",
+                        (unsigned int)reportItems.size() );
+                    ::MessageBoxW( m_hWnd, message, L"CyoHash - Forensic Report", MB_OK | MB_ICONINFORMATION );
+                }
+                else
+                {
+                    ::MessageBoxW( m_hWnd, error, L"CyoHash - Forensic Report", MB_OK | MB_ICONERROR );
+                }
+                ::CoTaskMemFree( path );
+            }
+        }
+    }
+
+    bHandled = TRUE;
+    return 0;
+}
+
+LRESULT CyoHashDlg2::OnMenuSelectMatchingHashes( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled )
+{
+    IntVector items = GetSelectedItems();
+    if (items.empty())
+    {
+        bHandled = TRUE;
+        return 0;
+    }
+
+    int sourceKey = GetItemKey( items[0] );
+    HashData source = SafeGetHashData( sourceKey );
+    if (!source.completed)
+    {
+        bHandled = TRUE;
+        return 0;
+    }
+
+    int count = ListView_GetItemCount( m_listWnd );
+    for (int i = 0; i < count; ++i)
+        ListView_SetItemState( m_listWnd, i, 0, LVIS_SELECTED | LVIS_FOCUSED );
+
+    m_matchingHighlightKeys.clear();
+    int firstMatch = -1;
+    for (int i = 0; i < count; ++i)
+    {
+        int key = GetItemKey( i );
+        HashData candidate = SafeGetHashData( key );
+        if (!candidate.completed)
+            continue;
+
+        if (_wcsicmp( candidate.algorithm, source.algorithm ) == 0 &&
+            _wcsicmp( candidate.hash, source.hash ) == 0)
+        {
+            ListView_SetItemState( m_listWnd, i, LVIS_SELECTED, LVIS_SELECTED );
+            m_matchingHighlightKeys.push_back( key );
+            if (firstMatch < 0)
+                firstMatch = i;
+        }
+    }
+
+    if (firstMatch >= 0)
+    {
+        ListView_SetItemState( m_listWnd, firstMatch, LVIS_FOCUSED, LVIS_FOCUSED );
+        ListView_EnsureVisible( m_listWnd, firstMatch, FALSE );
+    }
+    ::InvalidateRect( m_listWnd, NULL, FALSE );
+
+    bHandled = TRUE;
+    return 0;
+}
+
+LRESULT CyoHashDlg2::OnMenuResetColumns( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled )
+{
+    ResetColumnWidths();
+    bHandled = TRUE;
+    return 0;
+}
+
 LRESULT CyoHashDlg2::OnMenuAlwaysOnTop( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled )
 {
     m_alwaysOnTop = !m_alwaysOnTop;
     SetWindowPos(m_alwaysOnTop ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+
+    if (m_hMainMenu != NULL)
+    {
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_ALWAYS_ON_TOP, MF_BYCOMMAND | (m_alwaysOnTop ? MF_CHECKED : MF_UNCHECKED) );
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_UNSORTED, MF_BYCOMMAND | (m_sortBy == SortBy::Unsorted ? MF_CHECKED : MF_UNCHECKED) );
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_SORTBY_FILE, MF_BYCOMMAND | (m_sortBy == SortBy::SortByFile ? MF_CHECKED : MF_UNCHECKED) );
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_SORTBY_ALGORITHM, MF_BYCOMMAND | (m_sortBy == SortBy::SortByAlgorithm ? MF_CHECKED : MF_UNCHECKED) );
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_SORTBY_HASH, MF_BYCOMMAND | (m_sortBy == SortBy::SortByHash ? MF_CHECKED : MF_UNCHECKED) );
+    }
 
     bHandled = TRUE;
     return 0;
@@ -713,6 +1017,15 @@ LRESULT CyoHashDlg2::OnMenuUnsorted( WORD wNotifyCode, WORD wID, HWND hWndCtl, B
 {
     m_sortBy = SortBy::Unsorted;
     SortList();
+    if (m_hMainMenu != NULL)
+    {
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_ALWAYS_ON_TOP, MF_BYCOMMAND | (m_alwaysOnTop ? MF_CHECKED : MF_UNCHECKED) );
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_UNSORTED, MF_BYCOMMAND | (m_sortBy == SortBy::Unsorted ? MF_CHECKED : MF_UNCHECKED) );
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_SORTBY_FILE, MF_BYCOMMAND | (m_sortBy == SortBy::SortByFile ? MF_CHECKED : MF_UNCHECKED) );
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_SORTBY_ALGORITHM, MF_BYCOMMAND | (m_sortBy == SortBy::SortByAlgorithm ? MF_CHECKED : MF_UNCHECKED) );
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_SORTBY_HASH, MF_BYCOMMAND | (m_sortBy == SortBy::SortByHash ? MF_CHECKED : MF_UNCHECKED) );
+    }
+
 
     bHandled = TRUE;
     return 0;
@@ -722,6 +1035,15 @@ LRESULT CyoHashDlg2::OnMenuSortByFile( WORD wNotifyCode, WORD wID, HWND hWndCtl,
 {
     m_sortBy = SortBy::SortByFile;
     SortList();
+    if (m_hMainMenu != NULL)
+    {
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_ALWAYS_ON_TOP, MF_BYCOMMAND | (m_alwaysOnTop ? MF_CHECKED : MF_UNCHECKED) );
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_UNSORTED, MF_BYCOMMAND | (m_sortBy == SortBy::Unsorted ? MF_CHECKED : MF_UNCHECKED) );
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_SORTBY_FILE, MF_BYCOMMAND | (m_sortBy == SortBy::SortByFile ? MF_CHECKED : MF_UNCHECKED) );
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_SORTBY_ALGORITHM, MF_BYCOMMAND | (m_sortBy == SortBy::SortByAlgorithm ? MF_CHECKED : MF_UNCHECKED) );
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_SORTBY_HASH, MF_BYCOMMAND | (m_sortBy == SortBy::SortByHash ? MF_CHECKED : MF_UNCHECKED) );
+    }
+
 
     bHandled = TRUE;
     return 0;
@@ -731,6 +1053,15 @@ LRESULT CyoHashDlg2::OnMenuSortByAlgorithm( WORD wNotifyCode, WORD wID, HWND hWn
 {
     m_sortBy = SortBy::SortByAlgorithm;
     SortList();
+    if (m_hMainMenu != NULL)
+    {
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_ALWAYS_ON_TOP, MF_BYCOMMAND | (m_alwaysOnTop ? MF_CHECKED : MF_UNCHECKED) );
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_UNSORTED, MF_BYCOMMAND | (m_sortBy == SortBy::Unsorted ? MF_CHECKED : MF_UNCHECKED) );
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_SORTBY_FILE, MF_BYCOMMAND | (m_sortBy == SortBy::SortByFile ? MF_CHECKED : MF_UNCHECKED) );
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_SORTBY_ALGORITHM, MF_BYCOMMAND | (m_sortBy == SortBy::SortByAlgorithm ? MF_CHECKED : MF_UNCHECKED) );
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_SORTBY_HASH, MF_BYCOMMAND | (m_sortBy == SortBy::SortByHash ? MF_CHECKED : MF_UNCHECKED) );
+    }
+
 
     bHandled = TRUE;
     return 0;
@@ -740,6 +1071,15 @@ LRESULT CyoHashDlg2::OnMenuSortByHash( WORD wNotifyCode, WORD wID, HWND hWndCtl,
 {
     m_sortBy = SortBy::SortByHash;
     SortList();
+    if (m_hMainMenu != NULL)
+    {
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_ALWAYS_ON_TOP, MF_BYCOMMAND | (m_alwaysOnTop ? MF_CHECKED : MF_UNCHECKED) );
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_UNSORTED, MF_BYCOMMAND | (m_sortBy == SortBy::Unsorted ? MF_CHECKED : MF_UNCHECKED) );
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_SORTBY_FILE, MF_BYCOMMAND | (m_sortBy == SortBy::SortByFile ? MF_CHECKED : MF_UNCHECKED) );
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_SORTBY_ALGORITHM, MF_BYCOMMAND | (m_sortBy == SortBy::SortByAlgorithm ? MF_CHECKED : MF_UNCHECKED) );
+        ::CheckMenuItem( m_hMainMenu, IDC_MENU_SORTBY_HASH, MF_BYCOMMAND | (m_sortBy == SortBy::SortByHash ? MF_CHECKED : MF_UNCHECKED) );
+    }
+
 
     bHandled = TRUE;
     return 0;
@@ -762,6 +1102,10 @@ void CyoHashDlg2::ReadLastSettings()
     m_sortBy = (SortBy)ReadIntFromRegistry( hKey, L"sortBy", (int)SortBy::Unsorted );
 
     m_alwaysOnTop = ReadIntFromRegistry( hKey, L"alwaysOnTop", 0 ) != 0;
+
+    m_columnWidths[0] = ReadIntFromRegistry( hKey, L"columnFileWidth", -1 );
+    m_columnWidths[1] = ReadIntFromRegistry( hKey, L"columnAlgorithmWidth", -1 );
+    m_columnWidths[2] = ReadIntFromRegistry( hKey, L"columnHashWidth", -1 );
 
     ::RegCloseKey( hKey );
 }
@@ -795,6 +1139,12 @@ void CyoHashDlg2::SaveCurrentSettings()
 
     WriteIntToRegistry(hKey, L"alwaysOnTop", m_alwaysOnTop ? 1 : 0);
 
+    for (int i = 0; i < 3; ++i)
+        m_columnWidths[i] = ListView_GetColumnWidth( m_listWnd, i );
+    WriteIntToRegistry( hKey, L"columnFileWidth", m_columnWidths[0] );
+    WriteIntToRegistry( hKey, L"columnAlgorithmWidth", m_columnWidths[1] );
+    WriteIntToRegistry( hKey, L"columnHashWidth", m_columnWidths[2] );
+
     ::RegCloseKey( hKey );
 }
 
@@ -822,41 +1172,106 @@ void CyoHashDlg2::InitList()
     col3.pszText = L"Hash";
     ListView_InsertColumn( m_listWnd, 2, &col3 );
 
-    DWORD styles = (LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_SINGLEROW);
+    DWORD styles = (LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
     ListView_SetExtendedListViewStyleEx( m_listWnd, styles, styles );
+
+    if (m_columnWidths[0] > 20 && m_columnWidths[1] > 20 && m_columnWidths[2] > 20)
+    {
+        for (int i = 0; i < 3; ++i)
+            ListView_SetColumnWidth( m_listWnd, i, m_columnWidths[i] );
+    }
+    else
+    {
+        ResetColumnWidths();
+    }
 }
 
 void CyoHashDlg2::ResizeList()
 {
-    const int col1width = 80;
-    const int col2width = 300;
-
     RECT rect = { 0 };
     ::GetClientRect( m_hWnd, &rect );
     m_listWnd.MoveWindow( &rect );
+}
 
-    int width = (rect.right - rect.left);
-    int col0, col1, col2;
-    if (width > 680)
+void CyoHashDlg2::ResetColumnWidths()
+{
+    RECT rect = { 0 };
+    ::GetClientRect( m_hWnd, &rect );
+    int width = max( rect.right - rect.left, 240 );
+
+    const int algorithmWidth = 90;
+    const int minimumHashWidth = 260;
+    int hashWidth = minimumHashWidth;
+    int fileWidth = width - algorithmWidth - hashWidth - 8;
+
+    if (fileWidth < 180)
     {
-        col0 = (width - (col1width + col2width));
-        col1 = col1width; //fixed at 80
-        col2 = col2width; //fixed at 300
-    }
-    else if (width > (col1width * 3)) //width > 240
-    {
-        int var = (width - col1width);
-        col1 = col1width; //fixed at 80
-        col0 = col2 = (var / 2); //same width for both
-    }
-    else //width <= 240
-    {
-        col0 = col1 = col2 = (width / 3); //same width for all
+        fileWidth = max( 120, (width - algorithmWidth) / 2 );
+        hashWidth = max( 120, width - algorithmWidth - fileWidth - 8 );
     }
 
-    ListView_SetColumnWidth( m_listWnd, 0, col0 );
-    ListView_SetColumnWidth( m_listWnd, 1, col1 );
-    ListView_SetColumnWidth( m_listWnd, 2, col2 );
+    m_columnWidths[0] = fileWidth;
+    m_columnWidths[1] = algorithmWidth;
+    m_columnWidths[2] = hashWidth;
+
+    for (int i = 0; i < 3; ++i)
+        ListView_SetColumnWidth( m_listWnd, i, m_columnWidths[i] );
+}
+
+CStringW CyoHashDlg2::GetDirectoryPath( const CStringW& pathname ) const
+{
+    CStringW directory( pathname );
+    wchar_t* buffer = directory.GetBuffer( MAX_PATH );
+    if (!::PathRemoveFileSpecW( buffer ))
+    {
+        directory.ReleaseBuffer();
+        return CStringW();
+    }
+    directory.ReleaseBuffer();
+    return directory;
+}
+
+bool CyoHashDlg2::IsCrossPathDuplicate( int key )
+{
+    CComCritSecLock<CComCriticalSection> lock( m_sync );
+    HashData source = SafeGetHashData( key );
+    if (!source.completed || source.hash.IsEmpty())
+        return false;
+
+    CStringW sourceDirectory = GetDirectoryPath( source.pathname );
+    if (sourceDirectory.IsEmpty())
+        return false;
+
+    for (POSITION pos = m_hashData.GetStartPosition(); pos != NULL; )
+    {
+        HashMap::CPair* pair = m_hashData.GetNext( pos );
+        if (pair->m_key == key)
+            continue;
+
+        const HashData& candidate = pair->m_value;
+        if (!candidate.completed || candidate.hash.IsEmpty())
+            continue;
+
+        if (_wcsicmp( candidate.algorithm, source.algorithm ) != 0 ||
+            _wcsicmp( candidate.hash, source.hash ) != 0)
+            continue;
+
+        CStringW candidateDirectory = GetDirectoryPath( candidate.pathname );
+        if (!candidateDirectory.IsEmpty() && _wcsicmp( candidateDirectory, sourceDirectory ) != 0)
+            return true;
+    }
+
+    return false;
+}
+
+bool CyoHashDlg2::IsMatchingHighlightKey( int key ) const
+{
+    for (IntVector::const_iterator i = m_matchingHighlightKeys.begin(); i != m_matchingHighlightKeys.end(); ++i)
+    {
+        if (*i == key)
+            return true;
+    }
+    return false;
 }
 
 int CyoHashDlg2::GetItemKey( int item )
@@ -962,6 +1377,31 @@ void CyoHashDlg2::ShowPopupMenu( int x, int y )
     ::CheckMenuItem( hSubMenu, IDC_MENU_SORTBY_HASH, MF_BYCOMMAND | (m_sortBy == SortBy::SortByHash ? MF_CHECKED : MF_UNCHECKED) );
 
     ::CheckMenuItem(hSubMenu, IDC_MENU_ALWAYS_ON_TOP, MF_BYCOMMAND | (m_alwaysOnTop ? MF_CHECKED : MF_UNCHECKED) );
+
+    UINT matchingFlags = MF_BYCOMMAND | MF_GRAYED;
+    if (submenu == SUBMENU_COMPLETED && items.size() == 1)
+    {
+        int selectedKey = GetItemKey( items[0] );
+        HashData selected = SafeGetHashData( selectedKey );
+        if (selected.completed)
+        {
+            int matches = 0;
+            for (POSITION pos = m_hashData.GetStartPosition(); pos != NULL; )
+            {
+                HashMap::CPair* pair = m_hashData.GetNext( pos );
+                const HashData& candidate = pair->m_value;
+                if (candidate.completed &&
+                    _wcsicmp( candidate.algorithm, selected.algorithm ) == 0 &&
+                    _wcsicmp( candidate.hash, selected.hash ) == 0)
+                {
+                    ++matches;
+                }
+            }
+            if (matches > 1)
+                matchingFlags = MF_BYCOMMAND | MF_ENABLED;
+        }
+    }
+    ::EnableMenuItem( hSubMenu, IDC_MENU_SELECT_MATCHING_HASHES, matchingFlags );
 
     ::TrackPopupMenu( hSubMenu, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON, x, y, 0, m_hWnd, NULL );
 }
@@ -1155,6 +1595,7 @@ void CyoHashDlg2::HashThread( ThreadData* data )
     int key = data->key;
     ::SetEvent( data->readyEvent );
 
+    SafeSetStarted( key );
     PostMessage( WM_HASHING_STARTED, (WPARAM)key );
 
     HashData hashData = SafeGetHashData( key );
@@ -1189,6 +1630,7 @@ void CyoHashDlg2::HashThread( ThreadData* data )
         BYTE* pBuffer = &buffer[ 0 ];
 
         // Hash file...
+        ULARGE_INTEGER hashedFileSize = { 0 };
         {
             HANDLE hFile = ::CreateFileW( hashData.pathname, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL );
             utils::ensure< std::runtime_error >( hFile != INVALID_HANDLE_VALUE );
@@ -1196,6 +1638,7 @@ void CyoHashDlg2::HashThread( ThreadData* data )
 
             ULARGE_INTEGER totalsize = { 0 };
             totalsize.LowPart = ::GetFileSize( hFile, &totalsize.HighPart );
+            hashedFileSize = totalsize;
             double dTotalSize = static_cast< double >( totalsize.QuadPart );
 
             ULARGE_INTEGER completed = { 0 };
@@ -1278,7 +1721,7 @@ void CyoHashDlg2::HashThread( ThreadData* data )
 
         hasher->Stop();
 
-        SafeSetCompleted( key, hasher.get() );
+        SafeSetCompleted( key, hasher.get(), hashedFileSize.QuadPart );
 
         PostMessage( WM_HASHING_COMPLETED, (WPARAM)key );
     }
@@ -1426,6 +1869,9 @@ int CyoHashDlg2::SafeCreateHashData( LPCWSTR pathname, LPCWSTR algorithm )
     HashData& hashData = m_hashData[ m_nextKey ];
     hashData.pathname = pathname;
     hashData.algorithm = algorithm;
+    hashData.fileSize = 0;
+    ::ZeroMemory( &hashData.hashStartedUtc, sizeof(hashData.hashStartedUtc) );
+    ::ZeroMemory( &hashData.hashedUtc, sizeof(hashData.hashedUtc) );
     hashData.paused = false;
     hashData.completed = false;
     hashData.cancelled = false;
@@ -1457,7 +1903,14 @@ void CyoHashDlg2::SafeSetPaused( int key, bool paused )
     m_hashData[ key ].paused = paused;
 }
 
-void CyoHashDlg2::SafeSetCompleted( int key, IHasher* hasher )
+void CyoHashDlg2::SafeSetStarted( int key )
+{
+    CComCritSecLock<CComCriticalSection> lock( m_sync );
+
+    ::GetSystemTimeAsFileTime( &m_hashData[ key ].hashStartedUtc );
+}
+
+void CyoHashDlg2::SafeSetCompleted( int key, IHasher* hasher, ULONGLONG fileSize )
 {
     CComCritSecLock<CComCriticalSection> lock( m_sync );
 
@@ -1467,6 +1920,8 @@ void CyoHashDlg2::SafeSetCompleted( int key, IHasher* hasher )
     hashData.hash = hash;
     hashData.algorithmLong = name;
     hashData.splitHash = (hasher->GetAlgorithm() == sha384hash || hasher->GetAlgorithm() == sha512hash);
+    hashData.fileSize = fileSize;
+    ::GetSystemTimeAsFileTime( &hashData.hashedUtc );
     hashData.paused = false;
     hashData.completed = true;
     hashData.cancelled = false;

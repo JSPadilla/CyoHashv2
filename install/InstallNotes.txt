@@ -1,3 +1,17 @@
+﻿---CyoHash 2.6.0
+
+Installer notes:
+- This v2.6.0 test installer contains the x64 Release build.
+- The installer registers the 64-bit Explorer shell extension and requires administrator privileges.
+- LICENSE.TXT and README.TXT are installed with the application.
+
+Forensic reporting update:
+- Adds Export PDF to the individual completed-hash result dialog.
+- Adds Case Number/Name, Examiner, and optional Evidence/Item metadata.
+- Records the actual hash-completion timestamp in UTC and reports both UTC and local time.
+- Records file size at hashing time.
+- Generates a dependency-free forensic hash PDF containing the file path, algorithm, hash result, timestamps, and application version.
+
 ---CyoHash 2.4.0
 
 Thank you for downloading CyoHash!

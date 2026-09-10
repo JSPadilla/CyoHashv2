@@ -1,4 +1,4 @@
-// Microsoft Visual C++ generated resource script.
+﻿// Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
 
@@ -7,7 +7,7 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include "afxres.h"
+#include <winres.h>
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -32,7 +32,7 @@ END
 
 2 TEXTINCLUDE 
 BEGIN
-    "#include ""afxres.h""\r\n"
+    "#include <winres.h>\r\n"
     "\0"
 END
 
@@ -51,8 +51,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,4,0,0
- PRODUCTVERSION 2,4,0,0
+ FILEVERSION 2,6,0,0
+ PRODUCTVERSION 2,6,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -68,12 +68,12 @@ BEGIN
         BLOCK "080904b0"
         BEGIN
             VALUE "FileDescription", "CyoHash"
-            VALUE "FileVersion", "2.4.0.0"
+            VALUE "FileVersion", "2.6.0.0"
             VALUE "InternalName", "CyoHash.exe"
             VALUE "LegalCopyright", "Copyright (c) Graham Bull. All rights reserved."
             VALUE "OriginalFilename", "CyoHash.exe"
             VALUE "ProductName", "CyoHash"
-            VALUE "ProductVersion", "2.4.0"
+            VALUE "ProductVersion", "2.6.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -90,25 +90,62 @@ END
 
 IDD_CYOHASH2 DIALOGEX 0, 0, 400, 100
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
-CAPTION "CyoHash"
+CAPTION "CyoHash v2.6.0"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "",IDC_LIST,"SysListView32",LVS_REPORT | LVS_ALIGNLEFT | LVS_NOCOLUMNHEADER | WS_TABSTOP,6,6,388,88
+    CONTROL         "",IDC_LIST,"SysListView32",LVS_REPORT | LVS_ALIGNLEFT | WS_TABSTOP,6,6,388,88
 END
 
-IDD_CYOHASH DIALOGEX 0, 0, 320, 126
+IDD_CYOHASH DIALOGEX 0, 0, 320, 146
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "CyoHash"
+CAPTION "CyoHash v2.6.0"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     LTEXT           "IDC_FILE",IDC_FILE,6,6,308,12,SS_CENTERIMAGE | SS_PATHELLIPSIS
     EDITTEXT        IDC_HASH_VALIDATE,60,108,254,12,ES_AUTOHSCROLL
     RTEXT           "Paste:",IDC_RESULT,6,108,48,12,SS_CENTERIMAGE
+    PUSHBUTTON      "Export PDF...",IDC_EXPORT_PDF,6,128,70,14
     GROUPBOX        "",IDC_STATIC,6,24,307,60
     CTEXT           "IDC_HASHNAME",IDC_HASHNAME,12,36,294,12,SS_CENTERIMAGE
     EDITTEXT        IDC_HASH,12,60,294,18,ES_CENTER | ES_MULTILINE | ES_READONLY | NOT WS_BORDER
     RTEXT           "Validate:",IDC_VALIDATE,6,90,48,12,SS_CENTERIMAGE
-    DEFPUSHBUTTON   "OK",IDOK,264,90,50,14
+    DEFPUSHBUTTON   "OK",IDOK,264,128,50,14
+END
+
+IDD_FORENSIC_REPORT DIALOGEX 0, 0, 336, 228
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "CyoHash - Forensic Report Details"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "Case Number/Name:",IDC_STATIC,8,10,82,12,SS_CENTERIMAGE
+    EDITTEXT        IDC_CASE_NAME,94,10,234,14,ES_AUTOHSCROLL
+    LTEXT           "Examiner:",IDC_STATIC,8,32,82,12,SS_CENTERIMAGE
+    EDITTEXT        IDC_EXAMINER,94,32,234,14,ES_AUTOHSCROLL
+    LTEXT           "Evidence/Item:",IDC_STATIC,8,54,82,12,SS_CENTERIMAGE
+    EDITTEXT        IDC_EVIDENCE_ITEM,94,54,234,14,ES_AUTOHSCROLL
+    CONTROL         "Suppress user name in source path (%USERPROFILE%)",IDC_SUPPRESS_USERPROFILE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,94,76,234,12
+    GROUPBOX        "PDF Table Sort Order",IDC_STATIC,8,96,320,100
+    LTEXT           "Priority",IDC_STATIC,18,109,36,10
+    LTEXT           "Column",IDC_STATIC,60,109,80,10
+    LTEXT           "Direction",IDC_STATIC,194,109,70,10
+    LTEXT           "1",IDC_STATIC,28,123,12,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_SORT_FIELD_1,60,121,122,80,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_SORT_DIR_1,194,121,122,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "2",IDC_STATIC,28,139,12,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_SORT_FIELD_2,60,137,122,80,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_SORT_DIR_2,194,137,122,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "3",IDC_STATIC,28,155,12,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_SORT_FIELD_3,60,153,122,80,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_SORT_DIR_3,194,153,122,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "4",IDC_STATIC,28,171,12,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_SORT_FIELD_4,60,169,122,80,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_SORT_DIR_4,194,169,122,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "5",IDC_STATIC,28,187,12,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_SORT_FIELD_5,60,185,122,80,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_SORT_DIR_5,194,185,122,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    DEFPUSHBUTTON   "Export PDF",IDOK,224,206,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,278,206,50,14
 END
 
 IDD_BROWSE DIALOGEX 0, 0, 352, 78
@@ -125,17 +162,21 @@ BEGIN
     COMBOBOX        IDC_ALGORITHM,78,30,84,108,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
-IDD_ABOUT DIALOGEX 0, 0, 228, 98
+IDD_ABOUT DIALOGEX 0, 0, 300, 150
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "About CyoHash"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",IDCANCEL,90,72,50,14
-    LTEXT           "CyoHash - Version 2.4",IDC_STATIC,42,12,174,12,SS_CENTERIMAGE
+    DEFPUSHBUTTON   "OK",IDCANCEL,125,126,50,14
+    LTEXT           "CyoHash - Version 2.6.0",IDC_STATIC,42,12,246,12,SS_CENTERIMAGE
     ICON            IDI_CYOHASH,IDC_STATIC,12,12,20,20
-    LTEXT           "Created by Graham Bull",IDC_STATIC,42,30,174,12,SS_CENTERIMAGE
-    CONTROL         "<a>https://github.com/calzakk/CyoHash</a>",IDC_PROJECTLINK,
-                    "SysLink",WS_TABSTOP,42,48,174,12
+    LTEXT           "Originally created by Graham Bull",IDC_STATIC,42,30,246,12,SS_CENTERIMAGE
+    CONTROL         "<a>https://github.com/calzakk/cyohash</a>",IDC_ORIGINALLINK,
+                    "SysLink",WS_TABSTOP,42,45,246,12
+    LTEXT           "Contributor: J.S. Padilla",IDC_STATIC,42,63,246,12,SS_CENTERIMAGE
+    CONTROL         "<a>https://github.com/JSPadilla</a>",IDC_PROJECTLINK,
+                    "SysLink",WS_TABSTOP,42,78,246,12
+    LTEXT           "Original BSD license and attribution retained in the distribution.",IDC_STATIC,42,96,246,12
 END
 
 
@@ -160,7 +201,7 @@ BEGIN
         LEFTMARGIN, 6
         RIGHTMARGIN, 314
         TOPMARGIN, 6
-        BOTTOMMARGIN, 120
+        BOTTOMMARGIN, 140
     END
 
     IDD_BROWSE, DIALOG
@@ -174,9 +215,9 @@ BEGIN
     IDD_ABOUT, DIALOG
     BEGIN
         LEFTMARGIN, 12
-        RIGHTMARGIN, 216
+        RIGHTMARGIN, 248
         TOPMARGIN, 12
-        BOTTOMMARGIN, 86
+        BOTTOMMARGIN, 114
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -196,6 +237,49 @@ IDI_CYOHASH             ICON                    "CyoHash.ico"
 // Menu
 //
 
+IDR_MAINMENU MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&Hash File(s)...",                 IDC_MENU_HASHFILE
+        MENUITEM SEPARATOR
+        MENUITEM "Export Hash(es)...",              IDC_MENU_EXPORTHASHES
+        MENUITEM "Export Forensic &PDF...",         IDC_MENU_EXPORT_FORENSIC_PDF
+        MENUITEM SEPARATOR
+        MENUITEM "Clear &Selected",                 IDC_MENU_CLEAR
+        MENUITEM "Clear &All",                      IDC_MENU_CLEARALL
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit",                           IDCANCEL
+    END
+    POPUP "&Hash"
+    BEGIN
+        MENUITEM "&Copy Hash",                      IDC_MENU_COPYHASH
+        MENUITEM "Select &Matching Hashes",         IDC_MENU_SELECT_MATCHING_HASHES
+        MENUITEM "&Recalculate",                    IDC_MENU_RECALCULATE
+        MENUITEM SEPARATOR
+        MENUITEM "&Pause",                          IDC_MENU_PAUSE
+        MENUITEM "&Resume",                         IDC_MENU_RESUME
+        MENUITEM "&Cancel",                         IDC_MENU_CANCEL
+    END
+    POPUP "&View"
+    BEGIN
+        POPUP "&Sort by"
+        BEGIN
+            MENUITEM "&Unsorted",                   IDC_MENU_UNSORTED
+            MENUITEM "&File",                       IDC_MENU_SORTBY_FILE
+            MENUITEM "&Algorithm",                  IDC_MENU_SORTBY_ALGORITHM
+            MENUITEM "&Hash",                       IDC_MENU_SORTBY_HASH
+        END
+        MENUITEM "Reset Column &Widths",            IDC_MENU_RESET_COLUMNS
+        MENUITEM SEPARATOR
+        MENUITEM "Always on &Top",                  IDC_MENU_ALWAYS_ON_TOP
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About CyoHash...",               IDC_MENU_ABOUT
+    END
+END
+
 IDR_MENU1 MENU
 BEGIN
     POPUP "Pause"
@@ -214,8 +298,9 @@ BEGIN
             MENUITEM "&Algorithm"               IDC_MENU_SORTBY_ALGORITHM
             MENUITEM "&Hash"                    IDC_MENU_SORTBY_HASH
         END
-    MENUITEM SEPARATOR
-    MENUITEM "Always on &top",                  IDC_MENU_ALWAYS_ON_TOP
+        MENUITEM "Reset Column &Widths",         IDC_MENU_RESET_COLUMNS
+        MENUITEM SEPARATOR
+        MENUITEM "Always on &top",               IDC_MENU_ALWAYS_ON_TOP
     MENUITEM SEPARATOR
     MENUITEM "&About CyoHash...",               IDC_MENU_ABOUT
     END
@@ -235,6 +320,7 @@ BEGIN
             MENUITEM "&Algorithm"               IDC_MENU_SORTBY_ALGORITHM
             MENUITEM "&Hash"                    IDC_MENU_SORTBY_HASH
         END
+        MENUITEM "Reset Column &Widths",         IDC_MENU_RESET_COLUMNS
         MENUITEM SEPARATOR
         MENUITEM "Always on &top",              IDC_MENU_ALWAYS_ON_TOP
         MENUITEM SEPARATOR
@@ -257,6 +343,7 @@ BEGIN
             MENUITEM "&Algorithm"               IDC_MENU_SORTBY_ALGORITHM
             MENUITEM "&Hash"                    IDC_MENU_SORTBY_HASH
         END
+        MENUITEM "Reset Column &Widths",         IDC_MENU_RESET_COLUMNS
         MENUITEM SEPARATOR
         MENUITEM "Always on &top",              IDC_MENU_ALWAYS_ON_TOP
         MENUITEM SEPARATOR
@@ -265,11 +352,13 @@ BEGIN
     POPUP "Completed"
     BEGIN
         MENUITEM "&Copy Hash",                  IDC_MENU_COPYHASH
+        MENUITEM "Select &Matching Hashes",      IDC_MENU_SELECT_MATCHING_HASHES
         MENUITEM "&Recalculate",                IDC_MENU_RECALCULATE
         MENUITEM "C&lear",                      IDC_MENU_CLEAR
         MENUITEM SEPARATOR
         MENUITEM "&Hash File(s)...",            IDC_MENU_HASHFILE
         MENUITEM "E&xport Hash(es)...",         IDC_MENU_EXPORTHASHES
+        MENUITEM "Export &Forensic PDF...",     IDC_MENU_EXPORT_FORENSIC_PDF
         MENUITEM "C&lear All",                  IDC_MENU_CLEARALL
         MENUITEM SEPARATOR
         POPUP "&Sort by"
@@ -279,6 +368,7 @@ BEGIN
             MENUITEM "&Algorithm"               IDC_MENU_SORTBY_ALGORITHM
             MENUITEM "&Hash"                    IDC_MENU_SORTBY_HASH
         END
+        MENUITEM "Reset Column &Widths",         IDC_MENU_RESET_COLUMNS
         MENUITEM SEPARATOR
         MENUITEM "Always on &top",              IDC_MENU_ALWAYS_ON_TOP
         MENUITEM SEPARATOR
@@ -300,6 +390,7 @@ BEGIN
             MENUITEM "&Algorithm"               IDC_MENU_SORTBY_ALGORITHM
             MENUITEM "&Hash"                    IDC_MENU_SORTBY_HASH
         END
+        MENUITEM "Reset Column &Widths",         IDC_MENU_RESET_COLUMNS
         MENUITEM SEPARATOR
         MENUITEM "Always on &top",              IDC_MENU_ALWAYS_ON_TOP
         MENUITEM SEPARATOR
@@ -318,6 +409,7 @@ BEGIN
             MENUITEM "&Algorithm"               IDC_MENU_SORTBY_ALGORITHM
             MENUITEM "&Hash"                    IDC_MENU_SORTBY_HASH
         END
+        MENUITEM "Reset Column &Widths",         IDC_MENU_RESET_COLUMNS
         MENUITEM SEPARATOR
         MENUITEM "Always on &top",              IDC_MENU_ALWAYS_ON_TOP
         MENUITEM SEPARATOR

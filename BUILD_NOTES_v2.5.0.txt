@@ -1,0 +1,107 @@
+CyoHash v2.5.0 - Forensic Reporting Update
+===========================================
+
+Purpose
+-------
+Adds an individual forensic PDF report to the completed-hash result dialog while preserving the existing hashing, validation, context-menu, and JSON/CSV/TXT export behavior.
+
+New behavior
+------------
+1. A completed hash now records:
+   - File size in bytes
+   - Actual hash-completion timestamp (UTC FILETIME)
+
+2. The individual hash-result dialog now includes an "Export PDF..." button.
+
+3. Export PDF opens a Forensic Report Details dialog requesting:
+   - Case Number/Name (required)
+   - Examiner (required)
+   - Evidence/Item (optional)
+
+4. The generated PDF includes:
+   - Case Number/Name
+   - Examiner
+   - Evidence/Item
+   - File name
+   - Full file path
+   - File size in bytes
+   - Hash algorithm
+   - Hash value
+   - Date/time hashed in local time with UTC offset
+   - Date/time hashed in UTC
+   - Report-generation date/time in local time with UTC offset
+   - Report-generation date/time in UTC
+   - CyoHash v2.5.0 identification and original attribution
+
+5. PDF generation is implemented internally and does not require Microsoft Word, Adobe Acrobat, a PDF printer, or an additional runtime/library.
+
+Version changes
+---------------
+- CyoHash.exe resources: 2.5.0
+- ShellExtension resources: 2.5.0
+- NSIS installer: 2.5.0
+- About dialog: Version 2.5
+
+New source files
+----------------
+source/ForensicReportDlg.h
+source/ForensicReportDlg.cpp
+source/PdfReport.h
+source/PdfReport.cpp
+
+Modified source files
+---------------------
+source/CyoHashDlg.h
+source/CyoHashDlg.cpp
+source/CyoHashDlg2.h
+source/CyoHashDlg2.cpp
+source/CyoHash.rc
+source/resource.h
+source/CyoHash.vcxproj
+source/CyoHash.vcxproj.filters
+source/ShellExtension/ShellExtension.rc
+install/CyoHash.nsi
+install/InstallNotes.txt
+README.md
+
+Offline compile notes
+---------------------
+The v2.5.0 project files have been modernized to use Platform Toolset v145 and WindowsTargetPlatformVersion 10.0. The 10.0 SDK target allows MSBuild/Visual Studio to select the currently installed Windows 10/11 SDK rather than requiring the legacy 10.0.17763.0 SDK. No new external dependencies were added.
+
+Recommended validation after compiling
+---------------------------------------
+- Hash known MD5/SHA1/SHA256/SHA384/SHA512 test files and confirm results are unchanged.
+- Test a zero-byte file.
+- Open a completed result and verify existing paste/hash validation still works.
+- Export a forensic PDF and verify all metadata, file size, hash, local time and UTC time.
+- Verify Cancel from the forensic metadata dialog creates no report.
+- Verify the Save dialog defaults to <filename>_Hash_Report.pdf.
+- Verify context-menu integration still launches and hashes correctly.
+- Verify both x86 and x64 builds if you distribute both architectures.
+
+Note
+----
+This source was modified but not compiled in the ChatGPT environment because the repository depends on the Windows ATL/WTL/Visual Studio build environment. Compile-time validation should therefore be performed in your offline Visual Studio environment.
+
+Context-menu PDF correction
+---------------------------
+The completed-results context menu now includes "Export Forensic PDF...". The command exports the currently selected completed hash result(s). Multiple selected results are written as a multi-page forensic PDF with one hash result per page and shared case/examiner/evidence metadata.
+
+PDF REPORT LAYOUT REVISION
+--------------------------
+- US Letter landscape (11 x 8.5 inches).
+- Case/examiner/evidence metadata appears once at the start of the report.
+- Hash results are presented in a paginated table.
+- Table columns: File Name, File Size (bytes), Hash Value.
+- Full file paths are not included in the PDF.
+- Table column headings repeat automatically on continuation pages.
+- Footer includes Page X of Y.
+- Variable row heights are calculated so wrapped file names/hash values remain inside the printable area.
+
+V2.6.0 PDF MATCH HIGHLIGHTING
+----------------------------
+- Duplicate PDF report rows are detected using algorithm + hash value.
+- Each matching group is assigned its own stable pastel row background.
+- The same matching group retains the same color across pagination.
+- Unique hashes remain uncolored.
+- This affects report presentation only and does not alter hash values or result ordering.
