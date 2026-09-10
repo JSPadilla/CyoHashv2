@@ -1,0 +1,140 @@
+﻿CyoHash v2.6.0 - Results Usability Update
+
+Scope of this development build
+-------------------------------
+1. Manually resizable result columns with saved/restored widths.
+2. Reset Column Widths context-menu command.
+3. Highlight matching algorithm/hash pairs when matching files are in different directories.
+4. Select Matching Hashes context-menu command.
+5. Multi-row result selection enabled.
+6. CyoHashDlg remains modal for this test cycle.
+
+Build environment
+-----------------
+- Visual Studio / MSVC Platform Toolset: v145
+- WindowsTargetPlatformVersion: 10.0 (uses an installed current Windows SDK)
+- Recommended build: Release | x64
+
+Suggested validation
+--------------------
+- Resize all three result columns, close CyoHash, reopen it, and verify widths are restored.
+- Use Reset Column Widths and verify useful defaults return.
+- Hash two identical files located in different directories using the same algorithm; both rows should be highlighted.
+- Hash identical files in the same directory; those alone should not trigger the cross-path highlight.
+- Hash the same files using different algorithms; unlike algorithms must not be treated as matches.
+- Right-click one completed duplicate and choose Select Matching Hashes; all completed rows with the same algorithm/hash pair should be selected.
+- Confirm existing JSON/TXT/CSV and forensic PDF exports still work.
+
+Version
+-------
+CyoHash executable, shell extension, About dialog, PDF creator metadata, and NSIS installer are identified as v2.6.0.
+
+
+## v2.6.0 UI refinement
+- Main and hash detail dialog titles now display `CyoHash v2.6.0`.
+- Added a conventional menu bar organized as File, Hash, View, and Help while retaining the existing right-click context menus.
+- `Select Matching Hashes` now renders its selected matches with a dedicated pale-green background/dark-green text, visually distinct from the standard Windows selection color.
+- Existing cross-path duplicate highlighting remains unchanged for duplicate rows that have not been selected through `Select Matching Hashes`.
+
+
+v2.6.0 modeless/about/PDF refinement
+------------------------------------
+- Hash detail windows (CyoHashDlg) are now modeless. Multiple completed hash detail windows can remain open simultaneously.
+- Modeless detail windows self-delete after their HWND is destroyed.
+- Removed creator/license attribution text from the forensic PDF footer; Page X of Y remains.
+- About dialog now identifies Graham Bull as the original creator and J.S. Padilla as current developer, with https://github.com/JSPadilla.
+- BSD license/attribution remains in the distribution and source headers.
+
+Recommended tests:
+1. Double-click several completed hashes and verify multiple detail windows remain open simultaneously.
+2. Close detail windows in different orders, then continue using the main results window.
+3. Close the main results window while detail windows are open and verify clean shutdown.
+4. Generate a multi-page forensic PDF and confirm only Page X of Y appears in the footer.
+5. Open Help > About CyoHash and verify creator/developer attribution and GitHub hyperlink.
+
+PDF EXPORT SORTING UPDATE
+-------------------------
+- Added ordered multi-column sorting to the forensic PDF export dialog.
+- Sortable PDF columns: File Name, File Size, Hash Value.
+- Three priority levels are available; unused levels may be set to None.
+- Each active level supports Ascending or Descending independently.
+- Duplicate active sort fields are rejected.
+- Sorting is applied only to the export copy and does not change the results-window order.
+- Default PDF sort: File Name ascending.
+
+Suggested verification:
+1. Export with File Name ascending and descending.
+2. Export with File Size ascending and descending.
+3. Export with Hash Value ascending and descending.
+4. Test a two-level sort (for example File Size ascending, File Name ascending).
+5. Test all three levels and confirm tie-breaking follows priority 1, 2, then 3.
+6. Confirm the main results-window order is unchanged after export.
+7. Confirm duplicate sort fields are rejected by the export dialog.
+
+
+PDF TABLE / DUPLICATE HIGHLIGHTING CORRECTION
+---------------------------------------------
+- Added Algorithm as a dedicated forensic PDF table column.
+- Revised the landscape column layout to fit File Name, File Size (bytes), Algorithm, and Hash Value on US Letter landscape.
+- Duplicate matching continues to use algorithm + hash value.
+- Replaced dynamically formatted RGB duplicate colors with a fixed PDF-safe pastel palette for reliable rendering.
+- Each distinct duplicate algorithm/hash group receives a different background color; unique results remain unfilled.
+- Added Algorithm to PDF sort choices.
+- Expanded PDF sorting from three to four priority levels so any combination of the four PDF columns can be used.
+
+Recommended verification:
+1. Export at least two identical files hashed with the same algorithm and confirm both PDF rows share one visible background color.
+2. Include a second duplicate group with a different hash and confirm it uses a different color.
+3. Confirm unique hash rows remain uncolored.
+4. Confirm the PDF table shows File Name, File Size (bytes), Algorithm, and Hash Value.
+5. Confirm Algorithm is available in the export sort dialog.
+6. Test a four-level sort and verify the main result-window order remains unchanged.
+
+
+PDF PATH INDICATOR / GRID RENDERING UPDATE
+------------------------------------------
+- Moved source path references below Report Generated in the first-page metadata block.
+- Each unique displayed source directory is assigned a numbered indicator in first-appearance order: Path 1, Path 2, etc.
+- Added a Path column to the forensic PDF table; each row contains only the numeric path indicator.
+- The %USERPROFILE% suppression option is applied before path indicators are assigned, so the path list and table references always match what is displayed in the report.
+- Revised the landscape table widths to fit File Name, File Size (bytes), Algorithm, Path, and Hash Value.
+- Highlighted row fills are now painted first, then the complete row grid (top, bottom, and all vertical rules) is redrawn in explicit black stroke. This addresses inconsistent/missing table lines observed in Microsoft Edge.
+- Pagination reserves additional first-page space for wrapped numbered path entries.
+
+Recommended verification:
+1. Export files from one directory and confirm the header shows Path 1 and every table row shows 1 in the Path column.
+2. Export files from three or more directories and confirm Path 1, Path 2, Path 3, etc. are listed below Report Generated and each row points to the correct path.
+3. Repeat with Suppress user name enabled and confirm the numbered path list uses %USERPROFILE%.
+4. Include multiple duplicate-hash groups and inspect the PDF in Microsoft Edge; all highlighted rows should retain complete horizontal and vertical grid lines.
+5. Generate a multi-page report with several source paths and confirm pagination remains within US Letter landscape.
+
+
+PDF HEADER / FOOTER REFINEMENT
+------------------------------
+- Removed Hash Algorithm(s) from the PDF metadata/header area. Algorithm remains a per-file table column.
+- Moved Examiner to the left metadata column directly beneath Case Number/Name.
+- Added a footer legend on every PDF page: like-colored highlights indicate matching hash values within the same algorithm.
+- Page X of Y remains at the lower-right.
+
+
+### v2.6.0 refinement
+- PDF Hash Start Time and Hash End Time values now use a common alignment position.
+- Removed automatic yellow/info-background shading for cross-path duplicate hashes in the main results list; matching-hash emphasis is now only shown when explicitly selecting matching hashes.
+- About dialog now links Graham Bull to the original project at https://github.com/calzakk/cyohash and identifies J.S. Padilla as Contributor.
+
+
+PDF UNIQUE MATCH COLORS / PATH NAME SORT UPDATE
+-----------------------------------------------
+- Duplicate match highlighting no longer cycles through a finite color palette.
+- Every distinct algorithm + hash match group receives a unique pastel RGB fill.
+- The generated color mapping is non-repeating for the first 262,144 match groups.
+- Added Full Path Name as a PDF sort field.
+- Path Name sorting uses the full source directory path, not the numeric Path indicator.
+- Expanded the PDF sort dialog to five priority levels so all five available sort fields can participate.
+
+Recommended verification:
+1. Create at least ten distinct duplicate-hash groups and confirm no two groups share the same highlight color.
+2. Confirm every row belonging to one algorithm + hash group uses the same color.
+3. Sort by Path Name ascending and descending and confirm files group by full source directory path.
+4. Combine Path Name with File Name or Hash Value as secondary sort levels and verify tie-breaking.
+5. Confirm the numeric Path indicator in the PDF still points to the correct full path listed in the header.

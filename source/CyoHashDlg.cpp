@@ -1,4 +1,4 @@
-//////////////////////////////////////////////////////////////////////
+﻿//////////////////////////////////////////////////////////////////////
 // CyoHashDlg.cpp - part of the CyoHash application
 //
 // Copyright (c) Graham Bull. All rights reserved.
@@ -28,16 +28,21 @@
 #include "stdafx.h"
 #include "CyoHashDlg.h"
 #include "Hasher.h"
+#include "ForensicReportDlg.h"
+#include "PdfReport.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction
 
-CyoHashDlg::CyoHashDlg( LPCWSTR pathname, LPCWSTR algorithm, LPCWSTR hash, bool splitHash )
+CyoHashDlg::CyoHashDlg( LPCWSTR pathname, LPCWSTR algorithm, LPCWSTR hash, bool splitHash, ULONGLONG fileSize, const FILETIME& hashStartedUtc, const FILETIME& hashedUtc )
 :   m_hIcon( NULL ),
     m_pathname( pathname ),
     m_algorithm( algorithm ),
     m_hash( hash ),
     m_splitHash( splitHash ),
+    m_fileSize( fileSize ),
+    m_hashStartedUtc( hashStartedUtc ),
+    m_hashedUtc( hashedUtc ),
     m_bEmpty( true ),
     m_bValid( false )
 {
@@ -47,6 +52,12 @@ CyoHashDlg::~CyoHashDlg()
 {
     if (m_hIcon != NULL)
         ::DestroyIcon( m_hIcon );
+}
+
+
+void CyoHashDlg::OnFinalMessage( HWND hWnd )
+{
+    delete this;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -85,7 +96,7 @@ LRESULT CyoHashDlg::OnInitDialog( UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL&
 
 LRESULT CyoHashDlg::OnClose( UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled )
 {
-    EndDialog( IDCANCEL );
+    DestroyWindow();
 
     bHandled = TRUE;
     return 0;
@@ -93,7 +104,7 @@ LRESULT CyoHashDlg::OnClose( UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHan
 
 LRESULT CyoHashDlg::OnClickedOK( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled )
 {
-    EndDialog( IDOK );
+    DestroyWindow();
 
     bHandled = TRUE;
     return 0;
@@ -101,7 +112,7 @@ LRESULT CyoHashDlg::OnClickedOK( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL&
 
 LRESULT CyoHashDlg::OnClickedCancel( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled )
 {
-    EndDialog( IDCANCEL );
+    DestroyWindow();
 
     bHandled = TRUE;
     return 0;
@@ -139,6 +150,67 @@ LRESULT CyoHashDlg::OnCtlColorEdit( UINT uMsg, WPARAM wParam, LPARAM lParam, BOO
         SetBkColor( (HDC)wParam, m_bValid ? RGB( 96, 255, 96 ) : RGB( 255, 96, 96 ));
         bHandled = TRUE;
         return 1;
+    }
+
+    bHandled = TRUE;
+    return 0;
+}
+
+
+LRESULT CyoHashDlg::OnClickedExportPdf( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled )
+{
+    ForensicReportDlg details;
+    if (details.DoModal( m_hWnd ) != IDOK)
+    {
+        bHandled = TRUE;
+        return 0;
+    }
+
+    CComPtr<IFileDialog> fileDialog;
+    if (FAILED(fileDialog.CoCreateInstance(CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER)))
+    {
+        ::MessageBoxW(m_hWnd, L"Unable to open the Save PDF dialog.", L"CyoHash - Forensic Report", MB_OK | MB_ICONERROR);
+        bHandled = TRUE;
+        return 0;
+    }
+    COMDLG_FILTERSPEC filters[] = { { L"PDF files", L"*.pdf" }, { L"All files", L"*.*" } };
+    fileDialog->SetFileTypes(ARRAYSIZE(filters), filters);
+    fileDialog->SetFileTypeIndex(1);
+    fileDialog->SetDefaultExtension(L"pdf");
+
+    CStringW filename = ::PathFindFileNameW((LPCWSTR)m_pathname);
+    int dot = filename.ReverseFind(L'.');
+    if (dot > 0) filename = filename.Left(dot);
+    CStringW suggested = filename + L"_Hash_Report.pdf";
+    fileDialog->SetFileName(suggested);
+
+    if (SUCCEEDED(fileDialog->Show(m_hWnd)))
+    {
+        CComPtr<IShellItem> item;
+        if (SUCCEEDED(fileDialog->GetResult(&item)))
+        {
+            PWSTR path = NULL;
+            if (SUCCEEDED(item->GetDisplayName(SIGDN_FILESYSPATH, &path)))
+            {
+                ForensicHashReportData data;
+                data.caseName = details.caseName;
+                data.examiner = details.examiner;
+                data.evidenceItem = details.evidenceItem;
+                data.pathname = m_pathname;
+                data.algorithm = m_algorithm;
+                data.hash = m_hash;
+                data.fileSize = m_fileSize;
+                data.hashStartedUtc = m_hashStartedUtc;
+                data.hashedUtc = m_hashedUtc;
+                data.suppressUserProfile = details.suppressUserProfile;
+                CStringW error;
+                if (pdfreport::SaveForensicHashReport(path, data, error))
+                    ::MessageBoxW(m_hWnd, L"Forensic hash report exported successfully.", L"CyoHash - Forensic Report", MB_OK | MB_ICONINFORMATION);
+                else
+                    ::MessageBoxW(m_hWnd, error, L"CyoHash - Forensic Report", MB_OK | MB_ICONERROR);
+                ::CoTaskMemFree(path);
+            }
+        }
     }
 
     bHandled = TRUE;

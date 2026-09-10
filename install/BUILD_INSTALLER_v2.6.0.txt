@@ -1,0 +1,33 @@
+﻿CyoHash v2.6.0 - NSIS Installer Build
+======================================
+
+Prerequisites
+-------------
+1. The x64 Release build must already exist:
+   ..\source\x64\Release\CyoHash.exe
+   ..\source\ShellExtension\x64\Release\CyoHash.dll
+2. The installer plugin Release build must exist:
+   .\plugin\Release\CyoHashInstallerPlugin.dll
+3. NSIS must be installed.
+
+Build
+-----
+From the install folder, compile CyoHash.nsi with NSIS (makensis.exe),
+or right-click CyoHash.nsi in Windows Explorer and choose Compile NSIS Script.
+
+Expected output
+---------------
+CyoHash-v2.6.0-Setup.exe
+
+This installer is x64-only and installs to:
+%ProgramFiles%\CyoHash
+
+Recommended clean-machine test
+------------------------------
+- Install as administrator.
+- Verify CyoHash appears in the Windows Explorer file context menu.
+- Hash a known file and verify its expected digest.
+- Export an individual forensic PDF report.
+- Verify Add/Remove Programs shows version 2.6.0.
+- Uninstall and verify the shell extension and program files are removed.
+- A reboot may be requested if Explorer has the shell-extension DLL locked.

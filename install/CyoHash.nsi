@@ -1,4 +1,4 @@
-;---------------------------------------------------------------------
+﻿;---------------------------------------------------------------------
 ; CyoHash.nsi - part of the CyoHash application
 ;
 ; Copyright (c) Graham Bull. All rights reserved.
@@ -33,10 +33,10 @@
 SetCompressor /SOLID /FINAL LZMA
 
 Name "CyoHash"
-OutFile "CyoHash.exe"
+OutFile "CyoHash-v2.6.0-Setup.exe"
 
-!define PRODUCT_VERSION 2.4.0
-!define FILE_VERSION    2.4.0.0
+!define PRODUCT_VERSION 2.6.0
+!define FILE_VERSION    2.6.0.0
 
 VIProductVersion "${FILE_VERSION}"
 VIAddVersionKey "FileVersion" "${FILE_VERSION}"
@@ -51,7 +51,6 @@ VIAddVersionKey "OriginalFilename" "CyoHash.exe"
 
 RequestExecutionLevel admin ;for Windows Vista+
 
-Var MACHINE_ARCHITECTURE
 Var ALREADYINSTALLED
 
 ;---------------------------------------------------------------------
@@ -86,42 +85,33 @@ Section "CyoHash" MainSection
     SetOutPath "$INSTDIR"
     WriteUninstaller "$INSTDIR\Uninstall.exe"
     SetOverwrite try
-    ${If} $MACHINE_ARCHITECTURE == "x64"
-        ;x64
-        File "..\source\x64\Release\CyoHash.exe"
-        ClearErrors
-        File "..\source\ShellExtension\x64\Release\CyoHash.dll"
-        ${If} ${Errors}
-            ;cannot overwrite dll
-            MessageBox MB_OK|MB_ICONEXCLAMATION "The existing CyoHash DLL is in use, and will be replaced when the machine is rebooted."
-            File "/oname=CyoHash0.dll" "..\source\ShellExtension\x64\Release\CyoHash.dll"
-            CyoHashInstallerPlugin::SwitchDllsOnReboot "$INSTDIR"
-            Pop $0
-            SetRebootFlag true
-        ${Else}
-            ExecWait 'regsvr32 -s "$INSTDIR\CyoHash.dll"'
-        ${EndIf}
+
+    ; v2.6.0 release package is x64-only.
+    File "..\source\x64\Release\CyoHash.exe"
+    ClearErrors
+    File "..\source\ShellExtension\x64\Release\CyoHash.dll"
+    ${If} ${Errors}
+        ; Existing shell-extension DLL is in use by Explorer. Stage the new DLL
+        ; and let the installer plugin swap it at reboot.
+        MessageBox MB_OK|MB_ICONEXCLAMATION "The existing CyoHash DLL is in use, and will be replaced when the machine is rebooted."
+        File "/oname=CyoHash0.dll" "..\source\ShellExtension\x64\Release\CyoHash.dll"
+        CyoHashInstallerPlugin::SwitchDllsOnReboot "$INSTDIR"
+        Pop $0
+        SetRebootFlag true
     ${Else}
-        ;x86
-        File "..\source\Release\CyoHash.exe"
-        ClearErrors
-        File "..\source\ShellExtension\Release\CyoHash.dll"
-        ${If} ${Errors}
-            ;cannot overwrite dll
-            MessageBox MB_OK|MB_ICONEXCLAMATION "The existing CyoHash DLL is in use, and will be replaced when the machine is rebooted."
-            File "/oname=CyoHash0.dll" "..\source\ShellExtension\Release\CyoHash.dll"
-            CyoHashInstallerPlugin::SwitchDllsOnReboot "$INSTDIR"
-            Pop $0
-            SetRebootFlag true
-        ${Else}
-            RegDll "$INSTDIR\CyoHash.dll"
-        ${EndIf}
+        ExecWait 'regsvr32 -s "$INSTDIR\CyoHash.dll"'
     ${EndIf}
 
+    ; Include redistribution/license documentation with the binary release.
+    File "..\LICENSE.TXT"
+    File "..\README.TXT"
+
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CyoHash" "DisplayName" "CyoHash"
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CyoHash" "DisplayVersion" "${FILE_VERSION}"
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CyoHash" "DisplayVersion" "${PRODUCT_VERSION}"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CyoHash" "HelpLink" "https://github.com/calzakk/CyoHash"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CyoHash" "Publisher" "Graham Bull"
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CyoHash" "DisplayIcon" "$INSTDIR\CyoHash.exe"
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CyoHash" "InstallLocation" "$INSTDIR"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CyoHash" "UninstallString" "$INSTDIR\Uninstall.exe"
     WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CyoHash" "NoModify" 1
     WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CyoHash" "NoRepair" 1
@@ -158,24 +148,14 @@ Function .onInit
         Abort
     ${EndIf}
 
-    ;Is this a supported platform?
-    CyoHashInstallerPlugin::ValidatePlatform
-    Pop $0
-    ${If} $0 != "1"
-        MessageBox MB_OK|MB_ICONSTOP "CyoHash requires Windows 2000/XP/2003/Vista/7/2008 or newer operating systems"
-        Abort
-    ${EndIf}
-
-    ;Is this an x64 machine?
+    ; v2.6.0 installer contains the x64 Release binaries only.
     CyoHashInstallerPlugin::IsWindowsX64
     Pop $0
-    ${If} $0 == "1"
-        StrCpy $MACHINE_ARCHITECTURE "x64"
-        SectionSetText ${MainSection} "CyoHash (x64 edition)"
-    ${Else}
-        StrCpy $MACHINE_ARCHITECTURE "x86"
-        SectionSetText ${MainSection} "CyoHash"
+    ${If} $0 != "1"
+        MessageBox MB_OK|MB_ICONSTOP "CyoHash v2.6.0 requires a 64-bit version of Windows."
+        Abort
     ${EndIf}
+    SectionSetText ${MainSection} "CyoHash v2.6.0 (x64)"
 
     ;Already installed?
     ReadRegStr $INSTDIR HKLM "Software\CyoHash" ""
@@ -247,13 +227,11 @@ ShowUninstDetails show
 
 Section "Uninstall"
     Delete "$INSTDIR\Uninstall.exe"
-    ${If} $MACHINE_ARCHITECTURE == "x64"
-        ExecWait 'regsvr32 -s -u "$INSTDIR\CyoHash.dll"'
-    ${Else}
-        UnRegDll "$INSTDIR\CyoHash.dll"
-    ${EndIf}
+    ExecWait 'regsvr32 -s -u "$INSTDIR\CyoHash.dll"'
     Delete /REBOOTOK "$INSTDIR\CyoHash.dll"
     Delete /REBOOTOK "$INSTDIR\CyoHash.exe"
+    Delete /REBOOTOK "$INSTDIR\LICENSE.TXT"
+    Delete /REBOOTOK "$INSTDIR\README.TXT"
     RMDir /REBOOTOK "$INSTDIR"
 
     DeleteRegKey HKLM "Software\CyoHash"
@@ -274,14 +252,6 @@ Function un.onInit
         Abort
     ${EndIf}
 
-    ;Is this an x64 machine?
-    CyoHashInstallerPlugin::IsWindowsX64
-    Pop $0
-    ${If} $0 == "1"
-        StrCpy $MACHINE_ARCHITECTURE "x64"
-    ${Else}
-        StrCpy $MACHINE_ARCHITECTURE "x86"
-    ${EndIf}
 FunctionEnd
 
 ;---------------------------------------------------------------------

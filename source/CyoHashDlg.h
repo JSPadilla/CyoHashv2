@@ -1,4 +1,4 @@
-//////////////////////////////////////////////////////////////////////
+﻿//////////////////////////////////////////////////////////////////////
 // CyoHashDlg.h - part of the CyoHash application
 //
 // Copyright (c) Graham Bull. All rights reserved.
@@ -37,8 +37,11 @@ class CyoHashDlg : public CAxDialogImpl< CyoHashDlg >
 public:
 
     // Construction/Destruction
-    CyoHashDlg( LPCWSTR pathname, LPCWSTR algorithm, LPCWSTR hash, bool splitHash );
+    CyoHashDlg( LPCWSTR pathname, LPCWSTR algorithm, LPCWSTR hash, bool splitHash, ULONGLONG fileSize, const FILETIME& hashStartedUtc, const FILETIME& hashedUtc );
     ~CyoHashDlg();
+
+    // Modeless lifetime: delete the heap-allocated dialog after its HWND is destroyed.
+    void OnFinalMessage( HWND hWnd );
 
     enum { IDD = IDD_CYOHASH };
 
@@ -48,6 +51,7 @@ BEGIN_MSG_MAP( CyoHashDlg )
     MESSAGE_HANDLER( WM_CLOSE, OnClose )
     COMMAND_HANDLER( IDOK, BN_CLICKED, OnClickedOK )
     COMMAND_HANDLER( IDCANCEL, BN_CLICKED, OnClickedCancel )
+    COMMAND_HANDLER( IDC_EXPORT_PDF, BN_CLICKED, OnClickedExportPdf )
     COMMAND_HANDLER( IDC_HASH_VALIDATE, EN_CHANGE, OnEnChangeHashValidate )
     MESSAGE_HANDLER( WM_CTLCOLOREDIT, OnCtlColorEdit )
     CHAIN_MSG_MAP( CAxDialogImpl< CyoHashDlg >)
@@ -58,6 +62,7 @@ END_MSG_MAP()
     LRESULT OnClose( UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled );
     LRESULT OnClickedOK( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled );
     LRESULT OnClickedCancel( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled );
+    LRESULT OnClickedExportPdf( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled );
     LRESULT OnEnChangeHashValidate( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled );
     LRESULT OnCtlColorEdit( UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled );
 
@@ -69,6 +74,9 @@ private:
     CStringW m_algorithm;
     CStringW m_hash;
     bool m_splitHash;
+    ULONGLONG m_fileSize;
+    FILETIME m_hashStartedUtc;
+    FILETIME m_hashedUtc;
     bool m_bEmpty;
     bool m_bValid;
 };

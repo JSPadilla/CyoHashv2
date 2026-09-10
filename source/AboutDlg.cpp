@@ -61,7 +61,7 @@ LRESULT AboutDlg::OnClickedCancel( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOO
 LRESULT AboutDlg::OnNMClickProjectLink( int idCtrl, LPNMHDR pNMHDR, BOOL& bHandled )
 {
     wchar_t szUrl[ 256 ];
-    CWindow wnd = GetDlgItem( IDC_PROJECTLINK );
+    CWindow wnd = GetDlgItem( idCtrl );
     wnd.GetWindowTextW( szUrl, _countof( szUrl ));
 
     CStringW url = szUrl;
