@@ -1,5 +1,6 @@
 ﻿#include "stdafx.h"
 #include "ForensicReportDlg.h"
+#include "DialogLayout.h"
 
 ForensicReportDlg::ForensicReportDlg()
     : suppressUserProfile(false)
@@ -58,6 +59,8 @@ LRESULT ForensicReportDlg::OnInitDialog( UINT, WPARAM, LPARAM, BOOL& bHandled )
     InitialiseSortDirectionCombo( IDC_SORT_DIR_5 );
 
     CenterWindow( GetParent() );
+    const int fields[] = { IDC_CASE_NAME, IDC_EXAMINER, IDC_EVIDENCE_ITEM };
+    dialoglayout::FitFields(m_hWnd, fields, _countof(fields));
     GetDlgItem( IDC_CASE_NAME ).SetFocus();
     bHandled = TRUE;
     return FALSE;
@@ -120,5 +123,21 @@ LRESULT ForensicReportDlg::OnClickedCancel( WORD, WORD, HWND, BOOL& bHandled )
 {
     EndDialog( IDCANCEL );
     bHandled = TRUE;
+    return 0;
+}
+
+
+LRESULT ForensicReportDlg::OnDataChanged(WORD, WORD, HWND, BOOL& handled)
+{
+    PostMessage(WM_APP + 50);
+    handled = TRUE;
+    return 0;
+}
+
+LRESULT ForensicReportDlg::OnFitData(UINT, WPARAM, LPARAM, BOOL& handled)
+{
+    const int fields[] = { IDC_CASE_NAME, IDC_EXAMINER, IDC_EVIDENCE_ITEM };
+    dialoglayout::FitFields(m_hWnd, fields, _countof(fields));
+    handled = TRUE;
     return 0;
 }

@@ -56,6 +56,9 @@
     <ClInclude Include="cyoencode\CyoEncode.h">
       <Filter>CyoEncode</Filter>
     </ClInclude>
+    <ClInclude Include="DialogLayout.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="AboutDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>

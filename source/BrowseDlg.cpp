@@ -27,6 +27,7 @@
 
 #include "stdafx.h"
 #include "BrowseDlg.h"
+#include "DialogLayout.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction
@@ -175,7 +176,16 @@ LRESULT BrowseDlg::OnEnChangePathname( WORD wNotifyCode, WORD wID, HWND hWndCtl,
     GetDlgItemText( IDC_PATHNAME, strPathname );
 
     GetDlgItem( IDOK ).EnableWindow( !strPathname.IsEmpty() );
+    PostMessage(WM_APP + 50);
 
     bHandled = TRUE;
+    return 0;
+}
+
+LRESULT BrowseDlg::OnFitData(UINT, WPARAM, LPARAM, BOOL& handled)
+{
+    const int fields[] = { IDC_PATHNAME };
+    dialoglayout::FitFields(m_hWnd, fields, _countof(fields));
+    handled = TRUE;
     return 0;
 }

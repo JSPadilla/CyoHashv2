@@ -48,6 +48,7 @@ public:
 BEGIN_MSG_MAP( CyoHashDlg2 )
     MESSAGE_HANDLER( WM_INITDIALOG, OnInitDialog )
     MESSAGE_HANDLER( WM_SIZE, OnSize )
+    MESSAGE_HANDLER( WM_TIMER, OnLayoutTimer )
     MESSAGE_HANDLER( WM_DROPFILES, OnDropFiles )
     MESSAGE_HANDLER( WM_CLOSE, OnClose )
     COMMAND_HANDLER( IDCANCEL, BN_CLICKED, OnClickedCancel )
@@ -135,6 +136,8 @@ END_MSG_MAP()
     LRESULT OnMenuSortByAlgorithm( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled );
     LRESULT OnMenuSortByHash( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled );
 
+    LRESULT OnLayoutTimer( UINT, WPARAM, LPARAM, BOOL& );
+
     // Operations
     void OnPipeReady();
     void OnMessageReceived( LPBYTE start, DWORD length );
@@ -211,6 +214,8 @@ private:
     void SaveCurrentSettings();
     void WriteIntToRegistry( HKEY hKey, LPCWSTR name, int value );
     void ResizeList();
+    void FitResults();
+    void DrawAlignedGrid(HDC dc);
     void ResetColumnWidths();
     CStringW GetDirectoryPath( const CStringW& pathname ) const;
     bool IsCrossPathDuplicate( int key );

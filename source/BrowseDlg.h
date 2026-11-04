@@ -45,6 +45,7 @@ public:
 BEGIN_MSG_MAP( BrowseDlg )
     MESSAGE_HANDLER( WM_INITDIALOG, OnInitDialog )
     MESSAGE_HANDLER( WM_CLOSE, OnClose )
+    MESSAGE_HANDLER( WM_APP + 50, OnFitData )
     COMMAND_HANDLER( IDCANCEL, BN_CLICKED, OnClickedCancel )
     COMMAND_HANDLER( IDOK, BN_CLICKED, OnClickedOK )
     COMMAND_HANDLER( IDC_BROWSE, BN_CLICKED, OnClickedBrowse )
@@ -59,6 +60,8 @@ END_MSG_MAP()
     LRESULT OnClickedOK( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled );
     LRESULT OnClickedBrowse( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled );
     LRESULT OnEnChangePathname( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL& bHandled );
+
+    LRESULT OnFitData(UINT, WPARAM, LPARAM, BOOL&);
 
 private:
 
