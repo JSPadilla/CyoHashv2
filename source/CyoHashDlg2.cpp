@@ -196,7 +196,7 @@ LRESULT CyoHashDlg2::OnInitDialog( UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL
 
     ReadLastSettings();
 
-    SetWindowTextW( L"CyoHash v2.6.0" );
+    SetWindowTextW( L"CyoHash v2.6.1" );
     if (m_hMainMenu != NULL)
         ::SetMenu( m_hWnd, m_hMainMenu );
 

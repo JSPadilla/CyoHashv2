@@ -1,0 +1,46 @@
+CyoHash v2.6.1 - NSIS Installer Build
+====================================
+
+Prerequisites
+-------------
+- Visual Studio: MSVC v145, ATL, and a current Windows 10/11 SDK.
+- NSIS with its standard 32-bit ANSI plugin support.
+- Fresh Release binaries:
+  ../source/x64/Release/CyoHash.exe                 (2.6.1.0, x64)
+  ../source/ShellExtension/x64/Release/CyoHash.dll  (2.6.1.0, x64)
+  plugin/Release/CyoHashInstallerPlugin.dll         (Win32 NSIS plugin)
+
+Build from the repository root
+------------------------------
+1. msbuild source\CyoHash.sln /p:Configuration=Release /p:Platform=x64
+   The solution maps the installer plugin to Release | Win32 automatically.
+2. Change to install and compile:
+   makensis CyoHash.nsi
+
+Expected output: CyoHash-v2.6.1-Setup.exe
+The setup version resource is 2.6.1.0; Add/Remove Programs shows 2.6.1.
+Payload: x64 CyoHash.exe and CyoHash.dll, LICENSE.TXT, README.TXT, and
+BUILD_NOTES_v2.6.1.txt. The NSIS helper remains a 32-bit plugin.
+Installation target: %ProgramFiles%\CyoHash.
+
+Validation status
+-----------------
+The Release | x64 solution build passed on 5 November 2026, using a
+temporary no-debug-symbol MSBuild override for the local MSPDB140.DLL issue.
+CyoHash.exe and CyoHash.dll were inspected and report version 2.6.1.0 and
+x64 architecture. The installer helper was rebuilt and confirmed as Win32.
+Installer compilation is left to the maintainer. Compile CyoHash.nsi locally
+with NSIS to produce CyoHash-v2.6.1-Setup.exe. The existing 2.6.0 setup in the
+repository is a historical artifact and has not been relabeled.
+Installation, upgrade, reboot replacement, and uninstall require a disposable
+x64 Windows machine and have not been performed as part of these source edits.
+
+Clean-machine / upgrade checks
+------------------------------
+- Install as administrator and verify the Explorer context menu.
+- Confirm application, About, DLL, setup, and PDF Creator version information.
+- Hash a known file and export individual and multi-result forensic PDFs.
+- Upgrade an existing 2.6.0 installation with CyoHash closed.
+- If Explorer locks the DLL, verify reboot replacement and post-reboot version.
+- Confirm Add/Remove Programs shows 2.6.1.
+- Uninstall and verify the shell extension and installed documentation are removed.

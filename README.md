@@ -9,16 +9,25 @@ Project: https://github.com/JSPadilla
 
 ## Current Version
 
-**CyoHash v2.6.0**
+**CyoHash v2.6.1**
 
-### v2.6.0 enhancements
+### v2.6.1 changes
 
-- Main result and hash-detail window titles display the current CyoHash version.
+- Results-table dividers align with the column-heading dividers, including horizontal scrolling.
+- Result columns and the results window grow to fit file paths and completed hashes.
+- Hash-detail, file-selection, and forensic metadata dialogs expand for their data within the monitor work area.
+- Long detail paths are selectable and scrollable. Text-field reflow preserves the selection and caret.
+- Application resources, shell extension, About dialog, PDF version labels/metadata, and installer identify version 2.6.1.
+- The x64 installer is named `CyoHash-v2.6.1-Setup.exe` and includes the current build notes.
+- See [BUILD_NOTES_v2.6.1.txt](BUILD_NOTES_v2.6.1.txt) and [installer build instructions](install/BUILD_INSTALLER_v2.6.1.txt).
+
+### Features retained from v2.6.0
+
+- The main results window displays the current CyoHash version; hash-detail titles identify the file.
 - Added a conventional menu bar organized under File, Hash, View, and Help while retaining the right-click context menus.
 - Result columns can be manually resized.
 - Column widths are saved per user under `HKCU\Software\CyoHash` and restored on the next launch.
 - `Reset Column Widths` restores the default File, Algorithm, and Hash widths.
-- Completed results with the same **algorithm + hash value** but originating from different directory paths are visually highlighted.
 - `Select Matching Hashes` selects all completed rows with the same algorithm + hash value and uses a dedicated highlight distinct from normal Windows selection.
 - Multiple result rows can be selected for export and reporting.
 - The completed-hash detail dialog is modeless, allowing multiple detail windows to remain open simultaneously.
@@ -62,7 +71,7 @@ This setting changes only the source path presented in the generated PDF. It doe
 
 ## Building
 
-The original project was developed with Microsoft Visual Studio 2017. The current source has been retargeted for the modern Visual Studio toolchain and Windows SDK used by the v2.6.0 development build. The installer is built with NSIS.
+The original project was developed with Microsoft Visual Studio 2017. The current source has been retargeted for the modern Visual Studio toolchain and Windows SDK used by the v2.6.1 build. The installer is built with NSIS.
 
 ### 1. Build the solution
 
@@ -72,7 +81,7 @@ Load `source\CyoHash.sln` in Visual Studio and build the desired configuration. 
 
 After building the solution, right-click `install\CyoHash.nsi` and select **Compile NSIS Script**, or open/drag the script into the NSIS compiler (MakeNSISW).
 
-The current installer is x64 and produces a versioned CyoHash setup executable.
+The installer script targets x64 and, when compiled, produces `install\CyoHash-v2.6.1-Setup.exe`. The 2.6.1 setup binary is not yet built; see the installer build instructions for validation status. The solution maps the installer plugin to Release | Win32 because NSIS uses the 32-bit plugin; the application and Explorer shell extension are x64.
 
 ## Usage
 

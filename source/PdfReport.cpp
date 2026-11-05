@@ -460,7 +460,7 @@ namespace
     void DrawReportMetadata( std::ostringstream& content, const std::vector<ForensicHashReportData>& data, const FILETIME& generated )
     {
         TextLine(content, "F2", 17, LEFT, 574, "CyoHash - Forensic Hash Report");
-        TextLine(content, "F1", 8, LEFT, 559, "CyoHash v2.6.0");
+        TextLine(content, "F1", 8, LEFT, 559, "CyoHash v2.6.1");
         DrawLine(content, LEFT, 551, RIGHT, 551);
 
         const ForensicHashReportData& firstData = data[0];
@@ -609,7 +609,7 @@ bool pdfreport::SaveForensicHashReportBatch( LPCWSTR pathname, const std::vector
         obj[font1Obj] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>";
         obj[font2Obj] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>";
         obj[font3Obj] = "<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>";
-        obj[infoObj] = std::string("<< /Title (CyoHash Forensic Hash Report) /Creator (CyoHash v2.6.0) /CreationDate (") + PdfDateNow() + ") >>";
+        obj[infoObj] = std::string("<< /Title (CyoHash Forensic Hash Report) /Creator (CyoHash v2.6.1) /CreationDate (") + PdfDateNow() + ") >>";
 
         std::ofstream file(pathname, std::ios::binary | std::ios::trunc);
         if (!file) { error=L"Unable to create the PDF file."; return false; }
