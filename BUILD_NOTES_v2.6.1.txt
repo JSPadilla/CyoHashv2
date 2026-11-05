@@ -1,0 +1,63 @@
+CyoHash v2.6.1 - Results Alignment and Dialog Sizing
+===================================================
+Build date: 5 November 2026
+
+Changes since v2.6.0
+-------------------
+- Draw results-grid dividers from the header's column boundaries, keeping
+  header and data-row separators aligned during resizing and scrolling.
+- Grow result columns for file paths, algorithm captions, and completed hashes.
+  Grow the results window for columns and rows, capped by the monitor work area.
+- Grow hash-detail, file-selection, and forensic metadata dialogs for text.
+  Preserve field selection/caret during deferred text reflow.
+- Make the full path in hash details selectable and horizontally scrollable.
+- Update executable and shell-extension resources to 2.6.1.0; application,
+  About, PDF labels/Creator metadata, and installer identify version 2.6.1.
+
+Build requirements
+------------------
+Visual Studio with MSVC v145 and ATL, a current Windows 10/11 SDK, and NSIS.
+From a Visual Studio Developer Command Prompt at the repository root:
+  msbuild source\CyoHash.sln /p:Configuration=Release /p:Platform=x64
+The solution builds the application and shell extension as x64, and the NSIS
+installer plugin as Win32. The Win32 plugin is required even on x64 Windows.
+For the optional 32-bit application build:
+  msbuild source\CyoHash.vcxproj /p:Configuration=Release /p:Platform=Win32
+The release installer continues to package x64 application binaries only.
+
+Installer
+---------
+See install/BUILD_INSTALLER_v2.6.1.txt.
+Expected output: install/CyoHash-v2.6.1-Setup.exe.
+The installer includes LICENSE.TXT, README.TXT, and these build notes.
+Older versioned notes and installer artifacts are historical.
+
+Validation
+----------
+The preceding layout changes were built for Win32 and x64 and visually
+checked using long file paths and MD5/SHA-512 results. Version 2.6.1 packaging
+validation is recorded in install/BUILD_INSTALLER_v2.6.1.txt. The complete
+x64 solution build passed and both app/DLL versions were verified as 2.6.1.0.
+The NSIS helper was rebuilt as Win32. Installer compilation is left to the
+maintainer; compile the updated script locally to produce the 2.6.1 setup.
+The local MSVC installation previously reported an MSPDB140.DLL mismatch.
+If needed for verification, a temporary MSBuild targets override disables
+debug information and whole-program optimization without changing project
+release settings. Repair the local tool installation for normal symbol builds.
+
+Recommended release checks
+--------------------------
+- Verify application, About, shell-extension, PDF Creator, and setup versions.
+- Hash known MD5 and SHA-512 test files and compare expected digests.
+- Resize columns and horizontally scroll; verify divider alignment.
+- Open long-path hash details; verify complete/copyable paths and validation.
+- Enter long file paths and case/examiner/evidence values; check field reflow.
+- Test small screens, monitor edges, many rows, and Windows display scaling.
+- Export individual and multi-result PDFs; verify sorting and duplicate colors.
+- Test clean install, upgrade from 2.6.0, Explorer integration, and uninstall
+  on a disposable x64 Windows system. Do not treat compilation as install testing.
+
+Attribution
+-----------
+Original creator: Graham Bull. Contributor: J.S. Padilla.
+Original BSD notices and license text are retained unchanged.

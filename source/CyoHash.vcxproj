@@ -195,6 +195,7 @@
   <ItemGroup>
     <ClInclude Include="cyoencode\CyoEncode.h" />
     <ClInclude Include="AboutDlg.h" />
+    <ClInclude Include="DialogLayout.h" />
     <ClInclude Include="BrowseDlg.h" />
     <ClInclude Include="CyoHashDlg.h" />
     <ClInclude Include="CyoHashDlg2.h" />

@@ -35,6 +35,7 @@
 #include "ForensicReportDlg.h"
 #include "PdfReport.h"
 #include "Utils.h"
+#include "DialogLayout.h"
 #include <algorithm>
 
 //////////////////////////////////////////////////////////////////////
@@ -195,7 +196,7 @@ LRESULT CyoHashDlg2::OnInitDialog( UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL
 
     ReadLastSettings();
 
-    SetWindowTextW( L"CyoHash v2.6.0" );
+    SetWindowTextW( L"CyoHash v2.6.1" );
     if (m_hMainMenu != NULL)
         ::SetMenu( m_hWnd, m_hMainMenu );
 
@@ -319,6 +320,7 @@ LRESULT CyoHashDlg2::OnHashingStarted( UINT uMsg, WPARAM wParam, LPARAM lParam, 
     ListView_SetItemText( m_listWnd, item, 1, (LPWSTR)(LPCWSTR)hashData.algorithm );
 
     SortList();
+    SetTimer(1, 150);
 
     bHandled = TRUE;
     return 0;
@@ -409,6 +411,7 @@ LRESULT CyoHashDlg2::OnHashingCompleted( UINT uMsg, WPARAM wParam, LPARAM lParam
     ListView_SetItemText( m_listWnd, item, 2, (LPWSTR)(LPCWSTR)hashData.hash );
 
     SortList();
+    SetTimer(1, 150);
     ::InvalidateRect( m_listWnd, NULL, FALSE );
 
     bHandled = TRUE;
@@ -531,7 +534,14 @@ LRESULT CyoHashDlg2::OnCustomDrawList( int idCtrl, LPNMHDR pnmh, BOOL& bHandled 
     if (customDraw->nmcd.dwDrawStage == CDDS_PREPAINT)
     {
         bHandled = TRUE;
-        return CDRF_NOTIFYITEMDRAW;
+        return CDRF_NOTIFYITEMDRAW | CDRF_NOTIFYPOSTPAINT;
+    }
+
+    if (customDraw->nmcd.dwDrawStage == CDDS_POSTPAINT)
+    {
+        DrawAlignedGrid(customDraw->nmcd.hdc);
+        bHandled = TRUE;
+        return CDRF_DODEFAULT;
     }
 
     if (customDraw->nmcd.dwDrawStage == CDDS_ITEMPREPAINT)
@@ -1172,7 +1182,7 @@ void CyoHashDlg2::InitList()
     col3.pszText = L"Hash";
     ListView_InsertColumn( m_listWnd, 2, &col3 );
 
-    DWORD styles = (LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
+    DWORD styles = (LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
     ListView_SetExtendedListViewStyleEx( m_listWnd, styles, styles );
 
     if (m_columnWidths[0] > 20 && m_columnWidths[1] > 20 && m_columnWidths[2] > 20)
@@ -1188,9 +1198,11 @@ void CyoHashDlg2::InitList()
 
 void CyoHashDlg2::ResizeList()
 {
+    if (!m_listWnd.IsWindow()) return;
     RECT rect = { 0 };
     ::GetClientRect( m_hWnd, &rect );
     m_listWnd.MoveWindow( &rect );
+    ::RedrawWindow(m_listWnd, NULL, NULL, RDW_INVALIDATE | RDW_ALLCHILDREN);
 }
 
 void CyoHashDlg2::ResetColumnWidths()
@@ -1966,4 +1978,80 @@ void CyoHashDlg2::SafeJoinAll()
             throw;
         }
     }
+}
+
+LRESULT CyoHashDlg2::OnLayoutTimer(UINT, WPARAM timer, LPARAM, BOOL& handled)
+{
+    if (timer != 1) { handled = FALSE; return 0; }
+    KillTimer(1);
+    FitResults();
+    handled = TRUE;
+    return 0;
+}
+
+void CyoHashDlg2::FitResults()
+{
+    if (!m_listWnd.IsWindow() || IsIconic()) return;
+    int width = 0;
+    for (int column = 0; column < 3; ++column)
+    {
+        int previous = ListView_GetColumnWidth(m_listWnd, column);
+        ListView_SetColumnWidth(m_listWnd, column, LVSCW_AUTOSIZE);
+        int content = ListView_GetColumnWidth(m_listWnd, column);
+        // Measure the caption separately: AUTOSIZE_USEHEADER stretches the last
+        // column to the viewport rather than measuring only the caption.
+        const wchar_t* captions[] = { L"File", L"Algorithm", L"Hash" };
+        int caption = dialoglayout::TextWidth(ListView_GetHeader(m_listWnd), captions[column]) + 24;
+        int desired = max(previous, max(content, caption));
+        ListView_SetColumnWidth(m_listWnd, column, desired);
+        width += desired;
+    }
+    RECT client;
+    GetClientRect(&client);
+    RECT row = { 0 }, header = { 0 };
+    ::GetWindowRect(ListView_GetHeader(m_listWnd), &header);
+    int rowHeight = 20;
+    if (ListView_GetItemRect(m_listWnd, 0, &row, LVIR_BOUNDS))
+        rowHeight = row.bottom - row.top;
+    int rows = min(ListView_GetItemCount(m_listWnd), 30);
+    int height = header.bottom - header.top + max(3, rows) * rowHeight + ::GetSystemMetrics(SM_CYHSCROLL);
+    dialoglayout::FitWindow(m_hWnd, max(client.right, width + ::GetSystemMetrics(SM_CXVSCROLL)),
+        max(client.bottom, height));
+}
+
+void CyoHashDlg2::DrawAlignedGrid(HDC dc)
+{
+    HWND header = ListView_GetHeader(m_listWnd);
+    RECT client, headerRect;
+    ::GetClientRect(m_listWnd, &client);
+    ::GetWindowRect(header, &headerRect);
+    ::MapWindowPoints(NULL, m_listWnd, reinterpret_cast<POINT*>(&headerRect), 2);
+    int saved = ::SaveDC(dc);
+    ::IntersectClipRect(dc, client.left, headerRect.bottom, client.right, client.bottom);
+    HPEN pen = ::CreatePen(PS_SOLID, 1, ::GetSysColor(COLOR_3DLIGHT));
+    HGDIOBJ old = ::SelectObject(dc, pen);
+    for (int i = 0; i < Header_GetItemCount(header); ++i)
+    {
+        RECT column;
+        Header_GetItemRect(header, i, &column);
+        ::MapWindowPoints(header, m_listWnd, reinterpret_cast<POINT*>(&column), 2);
+        // Use the same physical pixel as the header separator, including scroll.
+        ::MoveToEx(dc, column.right - 1, headerRect.bottom, NULL);
+        ::LineTo(dc, column.right - 1, client.bottom);
+    }
+    RECT row;
+    int first = ListView_GetTopIndex(m_listWnd);
+    if (ListView_GetItemRect(m_listWnd, first, &row, LVIR_BOUNDS))
+    {
+        int height = row.bottom - row.top;
+        if (height > 0)
+            for (int y = row.bottom - 1; y < client.bottom; y += height)
+            {
+                ::MoveToEx(dc, client.left, y, NULL);
+                ::LineTo(dc, client.right, y);
+            }
+    }
+    ::SelectObject(dc, old);
+    ::DeleteObject(pen);
+    ::RestoreDC(dc, saved);
 }

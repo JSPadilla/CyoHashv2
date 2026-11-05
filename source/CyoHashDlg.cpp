@@ -30,6 +30,7 @@
 #include "Hasher.h"
 #include "ForensicReportDlg.h"
 #include "PdfReport.h"
+#include "DialogLayout.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction
@@ -89,6 +90,8 @@ LRESULT CyoHashDlg::OnInitDialog( UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL&
     SetDlgItemTextW( IDC_HASH, (LPCWSTR)hash );
 
     SetDlgItemText( IDC_RESULT, L"Paste:" );
+    const int fields[] = { IDC_FILE, IDC_HASH, IDC_HASH_VALIDATE, IDC_HASHNAME };
+    dialoglayout::FitFields(m_hWnd, fields, _countof(fields));
 
     bHandled = TRUE;
     return 1;

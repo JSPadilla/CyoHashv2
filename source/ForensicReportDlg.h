@@ -31,6 +31,10 @@ public:
 
 BEGIN_MSG_MAP( ForensicReportDlg )
     MESSAGE_HANDLER( WM_INITDIALOG, OnInitDialog )
+    MESSAGE_HANDLER( WM_APP + 50, OnFitData )
+    COMMAND_HANDLER( IDC_CASE_NAME, EN_CHANGE, OnDataChanged )
+    COMMAND_HANDLER( IDC_EXAMINER, EN_CHANGE, OnDataChanged )
+    COMMAND_HANDLER( IDC_EVIDENCE_ITEM, EN_CHANGE, OnDataChanged )
     COMMAND_HANDLER( IDOK, BN_CLICKED, OnClickedOK )
     COMMAND_HANDLER( IDCANCEL, BN_CLICKED, OnClickedCancel )
     CHAIN_MSG_MAP( CAxDialogImpl< ForensicReportDlg >)
@@ -39,6 +43,9 @@ END_MSG_MAP()
     LRESULT OnInitDialog( UINT, WPARAM, LPARAM, BOOL& );
     LRESULT OnClickedOK( WORD, WORD, HWND, BOOL& );
     LRESULT OnClickedCancel( WORD, WORD, HWND, BOOL& );
+
+    LRESULT OnFitData(UINT, WPARAM, LPARAM, BOOL&);
+    LRESULT OnDataChanged( WORD, WORD, HWND, BOOL& );
 
     CStringW caseName;
     CStringW examiner;

@@ -32,11 +32,11 @@
 
 SetCompressor /SOLID /FINAL LZMA
 
-Name "CyoHash"
-OutFile "CyoHash-v2.6.0-Setup.exe"
+!define PRODUCT_VERSION 2.6.1
+!define FILE_VERSION    2.6.1.0
 
-!define PRODUCT_VERSION 2.6.0
-!define FILE_VERSION    2.6.0.0
+Name "CyoHash v${PRODUCT_VERSION}"
+OutFile "CyoHash-v${PRODUCT_VERSION}-Setup.exe"
 
 VIProductVersion "${FILE_VERSION}"
 VIAddVersionKey "FileVersion" "${FILE_VERSION}"
@@ -46,8 +46,8 @@ VIAddVersionKey "Comments" ""
 VIAddVersionKey "CompanyName" ""
 VIAddVersionKey "LegalCopyright" "(c) Graham Bull. All rights reserved."
 VIAddVersionKey "LegalTrademarks" ""
-VIAddVersionKey "FileDescription" "CyoHash"
-VIAddVersionKey "OriginalFilename" "CyoHash.exe"
+VIAddVersionKey "FileDescription" "CyoHash v${PRODUCT_VERSION} Setup"
+VIAddVersionKey "OriginalFilename" "CyoHash-v${PRODUCT_VERSION}-Setup.exe"
 
 RequestExecutionLevel admin ;for Windows Vista+
 
@@ -86,7 +86,7 @@ Section "CyoHash" MainSection
     WriteUninstaller "$INSTDIR\Uninstall.exe"
     SetOverwrite try
 
-    ; v2.6.0 release package is x64-only.
+    ; v${PRODUCT_VERSION} release package is x64-only.
     File "..\source\x64\Release\CyoHash.exe"
     ClearErrors
     File "..\source\ShellExtension\x64\Release\CyoHash.dll"
@@ -105,10 +105,11 @@ Section "CyoHash" MainSection
     ; Include redistribution/license documentation with the binary release.
     File "..\LICENSE.TXT"
     File "..\README.TXT"
+    File "..\BUILD_NOTES_v2.6.1.txt"
 
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CyoHash" "DisplayName" "CyoHash"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CyoHash" "DisplayVersion" "${PRODUCT_VERSION}"
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CyoHash" "HelpLink" "https://github.com/calzakk/CyoHash"
+    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CyoHash" "HelpLink" "https://github.com/JSPadilla/CyoHashv2"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CyoHash" "Publisher" "Graham Bull"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CyoHash" "DisplayIcon" "$INSTDIR\CyoHash.exe"
     WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\CyoHash" "InstallLocation" "$INSTDIR"
@@ -148,14 +149,14 @@ Function .onInit
         Abort
     ${EndIf}
 
-    ; v2.6.0 installer contains the x64 Release binaries only.
+    ; v${PRODUCT_VERSION} installer contains the x64 Release binaries only.
     CyoHashInstallerPlugin::IsWindowsX64
     Pop $0
     ${If} $0 != "1"
-        MessageBox MB_OK|MB_ICONSTOP "CyoHash v2.6.0 requires a 64-bit version of Windows."
+        MessageBox MB_OK|MB_ICONSTOP "CyoHash v${PRODUCT_VERSION} requires a 64-bit version of Windows."
         Abort
     ${EndIf}
-    SectionSetText ${MainSection} "CyoHash v2.6.0 (x64)"
+    SectionSetText ${MainSection} "CyoHash v${PRODUCT_VERSION} (x64)"
 
     ;Already installed?
     ReadRegStr $INSTDIR HKLM "Software\CyoHash" ""
@@ -232,6 +233,7 @@ Section "Uninstall"
     Delete /REBOOTOK "$INSTDIR\CyoHash.exe"
     Delete /REBOOTOK "$INSTDIR\LICENSE.TXT"
     Delete /REBOOTOK "$INSTDIR\README.TXT"
+    Delete /REBOOTOK "$INSTDIR\BUILD_NOTES_v2.6.1.txt"
     RMDir /REBOOTOK "$INSTDIR"
 
     DeleteRegKey HKLM "Software\CyoHash"

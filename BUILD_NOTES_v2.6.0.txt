@@ -1,4 +1,8 @@
-﻿CyoHash v2.6.0 - Results Usability Update
+Historical development notes; current release is v2.6.1.
+See BUILD_NOTES_v2.6.1.txt and install/BUILD_INSTALLER_v2.6.1.txt.
+Earlier statements below describe incremental work, not the current build.
+
+CyoHash v2.6.0 - Results Usability Update
 
 Scope of this development build
 -------------------------------

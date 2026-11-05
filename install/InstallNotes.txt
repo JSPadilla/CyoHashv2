@@ -1,32 +1,26 @@
-﻿---CyoHash 2.6.0
+CyoHash 2.6.1 - x64
+===================
 
-Installer notes:
-- This v2.6.0 test installer contains the x64 Release build.
-- The installer registers the 64-bit Explorer shell extension and requires administrator privileges.
-- LICENSE.TXT and README.TXT are installed with the application.
+This installer contains the CyoHash 2.6.1 x64 application and Explorer shell
+extension. It requires 64-bit Windows and administrator privileges.
 
-Forensic reporting update:
-- Adds Export PDF to the individual completed-hash result dialog.
-- Adds Case Number/Name, Examiner, and optional Evidence/Item metadata.
-- Records the actual hash-completion timestamp in UTC and reports both UTC and local time.
-- Records file size at hashing time.
-- Generates a dependency-free forensic hash PDF containing the file path, algorithm, hash result, timestamps, and application version.
+Changes in 2.6.1:
+- Results-table dividers align with their column headings.
+- Results columns and the results window grow to fit file paths and hashes.
+- Hash-detail, file-selection, and forensic metadata dialogs grow with data,
+  within the monitor work area; longer content remains scrollable.
+- Long detail paths can be selected and copied.
+- Executable, About, shell extension, PDF metadata, and installer versions
+  have been updated together.
 
----CyoHash 2.4.0
+LICENSE.TXT, README.TXT, and BUILD_NOTES_v2.6.1.txt are installed with the app.
+Close running CyoHash windows before upgrading. If Explorer has the shell
+extension locked, the installer may request a reboot to complete replacement.
 
-Thank you for downloading CyoHash!
+For usage, right-click files in Explorer and select a CyoHash algorithm.
+Use the menu bar or context menu to export hashes or forensic PDF reports.
+Double-click a completed result for hash details and validation.
 
-Version 2 introduces a new window that contains a list of files being hashed; hashing multiple files no longer opens a new window for each file.
-
-I'd be extremely grateful for any feedback on the change, whether good or bad!
-
---Installation
-Please close all open Windows Explorer instances before proceeding, otherwise you'll probably need to reboot (Windows XP users will unfortunately need to reboot regardless).
-
---Usage
-CyoHash usage is unchanged; simply right-click a file (or files) in Windows Explorer, select CyoHash, then select the algorithm. That's it!
-Right-click within the list to display a context menu; this can be used for pausing, resuming, or cancelling a hashing operation.
-Double-click a hashed file in the list to bring up the original dialog, into which a hash can be pasted to provide simple hash validation.
-
---Support
-For help, bug reports, or feature requests, please visit the project page at [https://github.com/calzakk/CyoHash].
+Support: https://github.com/JSPadilla/CyoHashv2
+Original project: https://github.com/calzakk/CyoHash
+Original creator: Graham Bull. Contributor: J.S. Padilla.

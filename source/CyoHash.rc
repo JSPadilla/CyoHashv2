@@ -51,8 +51,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,6,0,0
- PRODUCTVERSION 2,6,0,0
+ FILEVERSION 2,6,1,0
+ PRODUCTVERSION 2,6,1,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -68,12 +68,12 @@ BEGIN
         BLOCK "080904b0"
         BEGIN
             VALUE "FileDescription", "CyoHash"
-            VALUE "FileVersion", "2.6.0.0"
+            VALUE "FileVersion", "2.6.1.0"
             VALUE "InternalName", "CyoHash.exe"
             VALUE "LegalCopyright", "Copyright (c) Graham Bull. All rights reserved."
             VALUE "OriginalFilename", "CyoHash.exe"
             VALUE "ProductName", "CyoHash"
-            VALUE "ProductVersion", "2.6.0"
+            VALUE "ProductVersion", "2.6.1"
         END
     END
     BLOCK "VarFileInfo"
@@ -90,7 +90,7 @@ END
 
 IDD_CYOHASH2 DIALOGEX 0, 0, 400, 100
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
-CAPTION "CyoHash v2.6.0"
+CAPTION "CyoHash v2.6.1"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     CONTROL         "",IDC_LIST,"SysListView32",LVS_REPORT | LVS_ALIGNLEFT | WS_TABSTOP,6,6,388,88
@@ -98,16 +98,16 @@ END
 
 IDD_CYOHASH DIALOGEX 0, 0, 320, 146
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "CyoHash v2.6.0"
+CAPTION "CyoHash v2.6.1"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LTEXT           "IDC_FILE",IDC_FILE,6,6,308,12,SS_CENTERIMAGE | SS_PATHELLIPSIS
+    EDITTEXT        IDC_FILE,6,6,308,12,ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER
     EDITTEXT        IDC_HASH_VALIDATE,60,108,254,12,ES_AUTOHSCROLL
     RTEXT           "Paste:",IDC_RESULT,6,108,48,12,SS_CENTERIMAGE
     PUSHBUTTON      "Export PDF...",IDC_EXPORT_PDF,6,128,70,14
     GROUPBOX        "",IDC_STATIC,6,24,307,60
     CTEXT           "IDC_HASHNAME",IDC_HASHNAME,12,36,294,12,SS_CENTERIMAGE
-    EDITTEXT        IDC_HASH,12,60,294,18,ES_CENTER | ES_MULTILINE | ES_READONLY | NOT WS_BORDER
+    EDITTEXT        IDC_HASH,12,60,294,18,ES_CENTER | ES_MULTILINE | ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER
     RTEXT           "Validate:",IDC_VALIDATE,6,90,48,12,SS_CENTERIMAGE
     DEFPUSHBUTTON   "OK",IDOK,264,128,50,14
 END
@@ -168,7 +168,7 @@ CAPTION "About CyoHash"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDCANCEL,125,126,50,14
-    LTEXT           "CyoHash - Version 2.6.0",IDC_STATIC,42,12,246,12,SS_CENTERIMAGE
+    LTEXT           "CyoHash - Version 2.6.1",IDC_STATIC,42,12,246,12,SS_CENTERIMAGE
     ICON            IDI_CYOHASH,IDC_STATIC,12,12,20,20
     LTEXT           "Originally created by Graham Bull",IDC_STATIC,42,30,246,12,SS_CENTERIMAGE
     CONTROL         "<a>https://github.com/calzakk/cyohash</a>",IDC_ORIGINALLINK,

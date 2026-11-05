@@ -1,12 +1,16 @@
 ===============================================================================
 CyoHash
-https://github.com/calzakk/CyoHash
+https://github.com/JSPadilla/CyoHashv2
+Original project: https://github.com/calzakk/CyoHash
 
 Copyright (c) Graham Bull. All rights reserved.
 ===============================================================================
 
-Version 2.4.0.0
-Release Date 6th October 2019
+Version 2.6.1.0
+Build date: 5 November 2026
+Original creator: Graham Bull
+Contributor: J.S. Padilla
+Current build notes: BUILD_NOTES_v2.6.1.txt
 
 -------------------------------------------------------------------------------
 1. License
@@ -21,15 +25,16 @@ as long as you respect the original copyright.
 2. Building
 -------------------------------------------------------------------------------
 
-CyoHash in built using Microsoft Visual Studio 2015 (but will probably also
-build with an earlier version).
+CyoHash uses Visual Studio with the MSVC v145 toolset, ATL C++ components,
+and a current Windows 10/11 SDK. The release installer targets x64 Windows.
 The installer is built using NSIS (http://nsis.sourceforge.net/Download).
 
 1. Build the solution:
 
 Load the source\CyoHash.sln solution file into Visual Studio and perform a
-release build of both the Win32 and x64 configurations.  This will build the
-main application, the shell extension, and the installer plugin.
+Release | x64 build. This builds the x64 main application and shell extension
+and the Win32 installer plugin required by NSIS. The application also supports
+a separate Win32 build, but the installer packages x64 binaries only.
 
 2. Build the installer:
 
@@ -48,6 +53,20 @@ a hash function from the CyoHash context menu.
 -------------------------------------------------------------------------------
 4. Release Notes
 -------------------------------------------------------------------------------
+
+2.6.1 - 5 November 2026 build
+- Aligned results-table column dividers with their headings.
+- Added content-based sizing for results, hash details, file selection, and
+  forensic report metadata dialogs, bounded by the monitor work area.
+- Long detail paths are selectable and scrollable.
+- Updated executable, shell extension, PDF metadata, and x64 installer versions.
+- See BUILD_NOTES_v2.6.1.txt for build instructions and validation status.
+
+2.6.0
+- Added forensic PDF reporting with case/examiner metadata, timestamps,
+  file sizes, numbered source paths, duplicate-hash colors, and report sorting.
+- Added menu-bar access, persistent column widths, matching-hash selection,
+  and modeless hash-detail windows.
 
 2.4.0 - 6th October 2019
 - Added new 'Always on top' menu item.

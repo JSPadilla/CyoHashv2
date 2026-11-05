@@ -1,1 +1,7 @@
-Speed up hashing of large or multi-segmented files.
+CyoHash v2.6.1 follow-up
+======================
+- Compile install/CyoHash.nsi with NSIS to generate the 2.6.1 setup executable.
+- Complete the disposable-machine install/upgrade/uninstall checks in
+  install/BUILD_INSTALLER_v2.6.1.txt.
+- Validate small-screen and mixed-DPI dialog layouts.
+- Speed up hashing of large or multi-segmented files.
